@@ -1,0 +1,195 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "products": "المنتجات",
+    "orders": "الطلبات",
+    "coupons": "الكوبونات",
+    "profile": "الملف الشخصي",
+    "logout": "تسجيل الخروج",
+    "analytics": "التحليلات",
+    "crm": "إدارة العملاء",
+    "brand": "إعدادات العلامة التجارية",
+    "categories": "الفئات",
+    "funnels": "قمع المبيعات",
+    "email": "البريد الإلكتروني",
+    "automation": "الأتمتة",
+    "ai-tools": "أدوات الذكاء الاصطناعي",
+    "quizzes": "الاختبارات",
+    "vat": "ضريبة القيمة المضافة",
+    "media": "مكتبة الوسائط",
+    "localization": "الترجمة",
+    "group": {
+      "store": "المتجر",
+      "growth": "النمو",
+      "funnels": "القمع والبريد",
+      "tools": "الأدوات",
+      "content": "المحتوى"
+    }
+  },
+  "tab": {
+    "basic": "أساسي",
+    "description": "الوصف",
+    "seo": "SEO",
+    "delivery": "التسليم",
+    "assets": "الملفات",
+    "testimonials": "التقييمات",
+    "faqs": "الأسئلة الشائعة",
+    "funnel": "القمع"
+  },
+  "crm": {
+    "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني..."
+  },
+  "login": {
+    "title": "أهلاً بعودتك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "error": "بيانات الدخول غير صحيحة",
+    "termsPrefix": "بتسجيل الدخول، أنت توافق على",
+    "terms": "الشروط",
+    "and": "و",
+    "privacy": "سياسة الخصوصية",
+    "heroText": "أدر كل علاماتك التجارية ومنتجاتك وطلباتك من مكان واحد."
+  },
+  "products": {
+    "title": "المنتجات",
+    "new": "منتج جديد",
+    "empty": "لا توجد منتجات بعد",
+    "table": {
+      "search": "ابحث عن منتجات…",
+      "name": "الاسم",
+      "sku": "رمز المنتج",
+      "type": "النوع",
+      "price": "السعر",
+      "status": "الحالة",
+      "actions": "إجراءات",
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "form": {
+      "internalName": "الاسم الداخلي",
+      "nameAr": "الاسم (عربي)",
+      "nameEn": "الاسم (إنجليزي)",
+      "oneLinerAr": "وصف مختصر (عربي)",
+      "oneLinerEn": "وصف مختصر (إنجليزي)",
+      "type": "النوع",
+      "sku": "رمز المنتج",
+      "basePrice": "السعر الأساسي",
+      "currency": "العملة",
+      "salePrice": "سعر العرض",
+      "downloadLimit": "حد التنزيل",
+      "accessExpiryDays": "أيام انتهاء الوصول",
+      "crmScore": "نقاط CRM عند الشراء",
+      "sortOrder": "ترتيب العرض",
+      "status": "الحالة",
+      "deliveryMethod": "طريقة التسليم",
+      "vatRule": "قاعدة الضريبة",
+      "couponEligible": "قابل للخصم بكوبون",
+      "featured": "مميز",
+      "save": "حفظ",
+      "saveSuccess": "تم حفظ المنتج",
+      "saveError": "تعذر حفظ المنتج",
+      "deleteConfirmTitle": "حذف هذا المنتج؟",
+      "deleteConfirmBody": "لا يمكن التراجع عن هذا الإجراء.",
+      "deleteConfirm": "حذف",
+      "deleteCancel": "إلغاء",
+      "deleteSuccess": "تم حذف المنتج",
+      "deleteError": "تعذر حذف المنتج"
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "nameTooLong": "الاسم طويل جدًا",
+      "typeInvalid": "اختر نوع منتج صالح",
+      "skuInvalid": "رمز المنتج يجب أن يحتوي على حروف وأرقام و - و _ فقط",
+      "priceInvalid": "أدخل سعرًا صالحًا",
+      "currencyInvalid": "العملة يجب أن تكون 3 أحرف"
+    }
+  },
+  "orders": {
+    "title": "الطلبات",
+    "empty": "لا توجد طلبات بعد",
+    "table": {
+      "search": "ابحث عن طلبات…",
+      "invoice": "الفاتورة",
+      "status": "الحالة",
+      "total": "الإجمالي",
+      "payment": "الدفع",
+      "date": "التاريخ"
+    },
+    "detail": {
+      "back": "العودة إلى الطلبات",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "vat": "الضريبة",
+      "total": "الإجمالي",
+      "paymentMethod": "طريقة الدفع",
+      "paymentGateway": "بوابة الدفع",
+      "shipping": "يتطلب شحن",
+      "yes": "نعم",
+      "no": "لا"
+    }
+  },
+  "coupons": {
+    "title": "الكوبونات",
+    "new": "كوبون جديد",
+    "empty": "لا توجد كوبونات بعد",
+    "table": {
+      "code": "الرمز",
+      "type": "النوع",
+      "value": "القيمة",
+      "uses": "الاستخدامات",
+      "status": "الحالة",
+      "actions": "إجراءات"
+    },
+    "form": {
+      "code": "الرمز",
+      "type": "النوع",
+      "value": "القيمة",
+      "maxUses": "الحد الأقصى للاستخدام",
+      "expiresAt": "تاريخ الانتهاء",
+      "active": "مفعّل",
+      "save": "حفظ",
+      "saveSuccess": "تم حفظ الكوبون",
+      "saveError": "تعذر حفظ الكوبون",
+      "deleteConfirmTitle": "حذف هذا الكوبون؟",
+      "deleteConfirmBody": "لا يمكن التراجع عن هذا الإجراء.",
+      "deleteConfirm": "حذف",
+      "deleteCancel": "إلغاء",
+      "deleteSuccess": "تم حذف الكوبون",
+      "deleteError": "تعذر حذف الكوبون",
+      "edit": "تعديل الكوبون"
+    },
+    "validation": {
+      "codeInvalid": "الرمز يجب أن يكون 3-50 حرفًا أو رقمًا أو - أو _",
+      "typeInvalid": "اختر نوع كوبون صالح",
+      "valueInvalid": "أدخل قيمة صالحة"
+    }
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "superAdmin": "مدير عام",
+    "status": "الحالة",
+    "active": "مفعّل"
+  },
+  "funnel": {
+    "title": "قمع المبيعات",
+    "tripwire": "عرض الدخول",
+    "bump": "إضافة عند الدفع",
+    "oto": "عرض لمرة واحدة",
+    "downsell": "عرض بديل أقل سعرًا",
+    "premiumBridge": "الجسر المميز",
+    "productUlid": "معرّف المنتج",
+    "price": "السعر",
+    "originalPrice": "السعر الأصلي",
+    "timerMinutes": "المؤقت (دقائق)",
+    "scoreThreshold": "الحد الأدنى لنقاط العميل",
+    "headline": "العنوان (عربي)",
+    "save": "حفظ القمع",
+    "saveSuccess": "تم حفظ إعدادات القمع",
+    "saveError": "تعذر حفظ إعدادات القمع"
+  }
+}
