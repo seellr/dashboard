@@ -1,0 +1,195 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "coupons": "Coupons",
+    "profile": "Profile",
+    "logout": "Log out",
+    "analytics": "Analytics",
+    "crm": "CRM",
+    "brand": "Brand Config",
+    "categories": "Categories",
+    "funnels": "Funnels",
+    "email": "Email",
+    "automation": "Automation",
+    "ai-tools": "AI Tools",
+    "quizzes": "Quizzes",
+    "vat": "VAT",
+    "media": "Media Library",
+    "localization": "Localization",
+    "group": {
+      "store": "Store",
+      "growth": "Growth",
+      "funnels": "Funnels & Email",
+      "tools": "Tools",
+      "content": "Content"
+    }
+  },
+  "tab": {
+    "basic": "Basic",
+    "description": "Description",
+    "seo": "SEO",
+    "delivery": "Delivery",
+    "assets": "Assets",
+    "testimonials": "Testimonials",
+    "faqs": "FAQs",
+    "funnel": "Funnel"
+  },
+  "crm": {
+    "searchPlaceholder": "Search by name or email..."
+  },
+  "login": {
+    "title": "Welcome back",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "error": "Invalid credentials",
+    "termsPrefix": "By signing in, you agree to our",
+    "terms": "Terms",
+    "and": "&",
+    "privacy": "Privacy Policy",
+    "heroText": "Manage every brand, product, and order from one place."
+  },
+  "products": {
+    "title": "Products",
+    "new": "New Product",
+    "empty": "No products yet",
+    "table": {
+      "search": "Search products…",
+      "name": "Name",
+      "sku": "SKU",
+      "type": "Type",
+      "price": "Price",
+      "status": "Status",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "form": {
+      "internalName": "Internal name",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "oneLinerAr": "One-liner (Arabic)",
+      "oneLinerEn": "One-liner (English)",
+      "type": "Type",
+      "sku": "SKU",
+      "basePrice": "Base price",
+      "currency": "Currency",
+      "salePrice": "Sale price",
+      "downloadLimit": "Download limit",
+      "accessExpiryDays": "Access expiry (days)",
+      "crmScore": "CRM score on purchase",
+      "sortOrder": "Sort order",
+      "status": "Status",
+      "deliveryMethod": "Delivery method",
+      "vatRule": "VAT rule",
+      "couponEligible": "Coupon eligible",
+      "featured": "Featured",
+      "save": "Save",
+      "saveSuccess": "Product saved",
+      "saveError": "Could not save product",
+      "deleteConfirmTitle": "Delete this product?",
+      "deleteConfirmBody": "This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deleteSuccess": "Product deleted",
+      "deleteError": "Could not delete product"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name is too long",
+      "typeInvalid": "Select a valid product type",
+      "skuInvalid": "SKU can only contain letters, numbers, - and _",
+      "priceInvalid": "Enter a valid price",
+      "currencyInvalid": "Currency must be 3 letters"
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "empty": "No orders yet",
+    "table": {
+      "search": "Search orders…",
+      "invoice": "Invoice",
+      "status": "Status",
+      "total": "Total",
+      "payment": "Payment",
+      "date": "Date"
+    },
+    "detail": {
+      "back": "Back to orders",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "vat": "VAT",
+      "total": "Total",
+      "paymentMethod": "Payment method",
+      "paymentGateway": "Payment gateway",
+      "shipping": "Requires shipping",
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
+  "coupons": {
+    "title": "Coupons",
+    "new": "New Coupon",
+    "empty": "No coupons yet",
+    "table": {
+      "code": "Code",
+      "type": "Type",
+      "value": "Value",
+      "uses": "Uses",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "form": {
+      "code": "Code",
+      "type": "Type",
+      "value": "Value",
+      "maxUses": "Max uses",
+      "expiresAt": "Expires at",
+      "active": "Active",
+      "save": "Save",
+      "saveSuccess": "Coupon saved",
+      "saveError": "Could not save coupon",
+      "deleteConfirmTitle": "Delete this coupon?",
+      "deleteConfirmBody": "This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deleteSuccess": "Coupon deleted",
+      "deleteError": "Could not delete coupon",
+      "edit": "Edit Coupon"
+    },
+    "validation": {
+      "codeInvalid": "Code must be 3-50 letters, numbers, - or _",
+      "typeInvalid": "Select a valid coupon type",
+      "valueInvalid": "Enter a valid value"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "role": "Role",
+    "superAdmin": "Super admin",
+    "status": "Status",
+    "active": "Active"
+  },
+  "funnel": {
+    "title": "Funnel",
+    "tripwire": "Tripwire",
+    "bump": "Order bump",
+    "oto": "One-time offer (OTO)",
+    "downsell": "Downsell",
+    "premiumBridge": "Premium bridge",
+    "productUlid": "Product ULID",
+    "price": "Price",
+    "originalPrice": "Original price",
+    "timerMinutes": "Timer (minutes)",
+    "scoreThreshold": "CRM score threshold",
+    "headline": "Headline (Arabic)",
+    "save": "Save funnel",
+    "saveSuccess": "Funnel config saved",
+    "saveError": "Could not save funnel config"
+  }
+}
