@@ -14,6 +14,7 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
   const brandId = request.headers.get('x-brand-id') ?? '1'
   const search = request.nextUrl.search
   const targetUrl = `${BACKEND_API_URL}/admin/${path.join('/')}${search}`
+  console.log('Target URL:', targetUrl);
 
   const isMultipart = request.headers.get('content-type')?.includes('multipart/form-data')
   const isReadOnly = request.method === 'GET' || request.method === 'DELETE'
@@ -29,7 +30,6 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
       body = await request.text()
     }
   }
-
   const res = await fetch(targetUrl, {
     method: request.method,
     headers: {
