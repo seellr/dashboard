@@ -21,14 +21,21 @@ const roboto = Roboto({
   display: "swap",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params;
   return (
     // lang and dir are overridden by the [locale] layout via suppressHydrationWarning
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={locale === "ar" ? "rtl" : "ltr"}
+      suppressHydrationWarning
+    >
       <body
         className={`${cairo.variable} ${roboto.variable} antialiased min-h-screen`}
       >
