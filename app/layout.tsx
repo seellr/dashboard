@@ -1,25 +1,17 @@
 import type { Metadata } from "next";
-import { Cairo, Roboto } from "next/font/google";
+import "@fontsource/alexandria/400.css";
+import "@fontsource/alexandria/500.css";
+import "@fontsource/alexandria/600.css";
+import "@fontsource/alexandria/700.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description: "ME.INC / Seellr Admin Panel",
 };
-
-const cairo = Cairo({
-  subsets: ["arabic", "latin"],
-  variable: "--font-cairo",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  variable: "--font-roboto",
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
 
 export default async function RootLayout({
   children,
@@ -36,9 +28,7 @@ export default async function RootLayout({
       dir={locale === "ar" ? "rtl" : "ltr"}
       suppressHydrationWarning
     >
-      <body
-        className={`${cairo.variable} ${roboto.variable} antialiased min-h-screen`}
-      >
+      <body className="antialiased min-h-screen">
         {children}
       </body>
     </html>
