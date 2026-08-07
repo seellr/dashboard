@@ -59,6 +59,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
+/* Font family values (fontsource self-hosted) */
+:root {
+  --font-cairo: 'Alexandria', sans-serif;
+  --font-roboto: 'Roboto', sans-serif;
+  --font-body: var(--font-cairo);
+}
+
 /* Font switching: Cairo for Arabic, Roboto for English */
 html[lang="ar"] {
   --font-body: var(--font-cairo);
@@ -67,10 +74,6 @@ html[lang="ar"] {
 html[lang="en"] {
   --font-body: var(--font-roboto);
   direction: ltr;
-}
-/* Default fallback */
-:root {
-  --font-body: var(--font-cairo);
 }
 
 /* Light mode — blue primary */
