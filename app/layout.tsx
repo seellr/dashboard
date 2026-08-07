@@ -13,21 +13,14 @@ export const metadata: Metadata = {
   description: "ME.INC / Seellr Admin Panel",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>
 }) {
-  const { locale } = await params;
   return (
     // lang and dir are overridden by the [locale] layout via suppressHydrationWarning
-    <html
-      lang={locale}
-      dir={locale === "ar" ? "rtl" : "ltr"}
-      suppressHydrationWarning
-    >
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body className="antialiased min-h-screen">
         {children}
       </body>
