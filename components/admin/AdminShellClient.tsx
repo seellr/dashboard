@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   LayoutDashboard, Package, ShoppingCart, Ticket, LogOut,
-  BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle, Palette,
+  BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle,
   ChevronsUpDown, Settings, User, Languages, ImageIcon, CheckCircle2,
   Receipt, Loader2Icon,
 } from 'lucide-react'
@@ -64,7 +64,7 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
     groupKey: 'content',
     items: [
       { key: 'media', path: (l) => `/${l}/media`, icon: ImageIcon },
-      // { key: 'localization', path: (l) => `/${l}/localization`, icon: Languages },
+      { key: 'localization', path: (l) => `/${l}/localization`, icon: Languages },
     ],
   },
 ]

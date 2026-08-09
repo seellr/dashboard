@@ -13,14 +13,17 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
   const locale = request.headers.get('x-locale') ?? 'en'
   const brandId = request.headers.get('x-brand-id') ?? '1'
   const search = request.nextUrl.search
-  const targetUrl = `${BACKEND_API_URL}/admin/${path.join('/')}${search}`
+  // Preserve a trailing slash on the forwarded URL: the locale overrides
+  // endpoint (/admin/{scope}/{id}/locale/{locale}/) is defined with one.
+  const hasTrailingSlash = request.nextUrl.pathname.endsWith('/')
+  const targetUrl = `${BACKEND_API_URL}/admin/${path.join('/')}${hasTrailingSlash ? '/' : ''}${search}`
   console.log('Target URL:', targetUrl);
 
   const isMultipart = request.headers.get('content-type')?.includes('multipart/form-data')
   const isReadOnly = request.method === 'GET' || request.method === 'DELETE'
 
   let body: BodyInit | undefined
-  let extraHeaders: Record<string, string> = {}
+  const extraHeaders: Record<string, string> = {}
 
   if (!isReadOnly) {
     if (isMultipart) {
