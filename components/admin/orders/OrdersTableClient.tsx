@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/admin/shared/DataTable'
+import { DataTable } from '@/components/ui/data-table'
 import { useOrdersQuery } from '@/hooks/queries/useOrders'
 import type { Order } from '@/types/dto/order.dto'
 
@@ -99,7 +99,7 @@ export function OrdersTableClient({ locale }: { locale: string }) {
       <DataTable
         columns={columns}
         data={filtered}
-        searchPlaceholder={t('table.search') ?? 'Search orders…'}
+        search={{ column: 'invoice_number', placeholder: t('table.search') ?? 'Search orders…' }}
         toolbar={
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? 'all')}>
             <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
