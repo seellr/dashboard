@@ -191,5 +191,45 @@
     "save": "Save funnel",
     "saveSuccess": "Funnel config saved",
     "saveError": "Could not save funnel config"
+  },
+  "localization": {
+    "scopeBrand": "Brand Strings",
+    "scopeTheme": "Theme Strings",
+    "themeIdLabel": "Theme ID",
+    "localeArabic": "Arabic",
+    "localeEnglish": "English",
+    "columnKey": "Key",
+    "columnValue": "Value",
+    "columnStatus": "Status",
+    "statusOverridden": "Overridden",
+    "statusDefault": "Default",
+    "searchPlaceholder": "Search keys or values…",
+    "count": "{count} strings",
+    "empty": "No strings found.",
+    "editHint": "Click to edit",
+    "revertTitle": "Revert to default",
+    "saved": "String saved",
+    "reverted": "Reverted to default",
+    "tooLong": "Value must be at most 2000 characters.",
+    "export": "Export JSON",
+    "exported": "Strings exported",
+    "import": {
+      "button": "Import JSON",
+      "title": "Import strings",
+      "confirmBody": "This will replace all current overrides for this locale. Existing customizations not in the uploaded file will be lost.",
+      "confirmCount": "You are about to import {count} strings.",
+      "confirm": "Import & Replace",
+      "cancel": "Cancel",
+      "success": "Strings imported",
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidFormat": "Each string must be a text value.",
+      "emptyFile": "The file must contain at least one string."
+    },
+    "errors": {
+      "invalidLocale": "Invalid locale. Only Arabic and English are supported.",
+      "keyNotFound": "This string is no longer overridden, so nothing was reverted.",
+      "brandNotFound": "Brand not found.",
+      "themeNotFound": "Theme not found."
+    }
   }
 }
