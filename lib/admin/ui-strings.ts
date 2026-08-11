@@ -10,7 +10,7 @@ export function uiStringScopePlural(scope: UiStringScope): 'brands' | 'themes' {
 }
 
 function uiStringBase(scope: UiStringScope, id: number, locale: UiStringLocale): string {
-  return `/admin/${uiStringScopePlural(scope)}/${id}/locale/${locale}`
+  return `/${uiStringScopePlural(scope)}/${id}/locale/${locale}`
 }
 
 export function uiStringResolvedPath(scope: UiStringScope, id: number, locale: UiStringLocale): string {
