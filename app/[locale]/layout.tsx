@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
+import { DocumentDirection } from '@/components/DocumentDirection'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { routing } from '@/i18n/routing'
 
@@ -28,13 +29,14 @@ export default async function LocaleLayout({
   return (
     <>
       {/* Set lang/dir on <html> before first paint */}
-      <script
+      {/* <script
         // biome-ignore lint: needed for early lang/dir injection
         dangerouslySetInnerHTML={{
           __html: `document.documentElement.lang="${locale}";document.documentElement.dir="${dir}";`,
         }}
-      />
+      /> */}
       <DirectionProvider direction={dir}>
+        <DocumentDirection locale={locale} dir={dir} />
         <NextIntlClientProvider messages={messages}>
           <TooltipProvider>{children}</TooltipProvider>
         </NextIntlClientProvider>

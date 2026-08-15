@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
-import { DataTable } from '@/components/admin/shared/DataTable'
+import { DataTable } from '@/components/ui/data-table'
 import type { CrmCustomer } from '@/types/dto/crm.dto'
 
 export type { CrmCustomer }
@@ -78,7 +78,7 @@ export function CrmTableClient({ initialCustomers }: Props) {
     <DataTable
       columns={columns}
       data={initialCustomers ?? []}
-      searchPlaceholder="Search by name or email…"
+      search={{ placeholder: 'Search by name or email…' }}
     />
   )
 }

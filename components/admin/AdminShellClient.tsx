@@ -1,5 +1,6 @@
 'use client'
 
+import { useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
@@ -15,9 +16,9 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   LayoutDashboard, Package, ShoppingCart, Ticket, LogOut,
-  BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle, Palette,
+  BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle,
   ChevronsUpDown, Settings, User, Languages, ImageIcon, CheckCircle2,
-  Receipt,
+  Receipt, Loader2Icon,
 } from 'lucide-react'
 import { useAdminMe } from '@/hooks/queries/useAdminMe'
 import { useActiveBrand, BRANDS, type Brand } from '@/lib/admin/brand-context'
@@ -63,7 +64,7 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
     groupKey: 'content',
     items: [
       { key: 'media', path: (l) => `/${l}/media`, icon: ImageIcon },
-      // { key: 'localization', path: (l) => `/${l}/localization`, icon: Languages },
+      { key: 'localization', path: (l) => `/${l}/localization`, icon: Languages },
     ],
   },
 ]
@@ -161,29 +162,42 @@ function AdminProfileDropdown({ locale, onLogout }: { locale: string; onLogout: 
 function LocaleSwitcher({ locale }: { locale: string }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   function switchTo(newLocale: string) {
+    if (newLocale === locale) return
     const newPath = pathname.replace(`/${locale}`, `/${newLocale}`)
-    router.push(newPath)
+    startTransition(() => {
+      router.push(newPath)
+    })
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-md border bg-muted/40 p-0.5 text-xs">
-      {(['ar', 'en'] as const).map((l) => (
-        <button
-          key={l}
-          onClick={() => switchTo(l)}
-          className={cn(
-            'rounded px-2 py-0.5 font-medium uppercase transition-colors',
-            locale === l
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="flex items-center gap-0.5 rounded-md border bg-muted/40 p-0.5 text-xs">
+        {(['ar', 'en'] as const).map((l) => (
+          <button
+            key={l}
+            onClick={() => switchTo(l)}
+            disabled={isPending}
+            className={cn(
+              'rounded px-2 py-0.5 font-medium uppercase transition-colors',
+              locale === l
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+              isPending && 'cursor-wait'
+            )}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+      {isPending && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/50 backdrop-blur-sm">
+          <Loader2Icon className="size-10 animate-spin text-primary" />
+        </div>
+      )}
+    </>
   )
 }
 
