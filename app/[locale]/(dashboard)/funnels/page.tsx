@@ -7,6 +7,10 @@ export default async function AdminFunnelsPage({ params }: { params: Promise<{ l
   const { locale } = await params
   const queryClient = getQueryClient()
 
+  // Server-side prefetch can't resolve the active brand (it lives in
+  // localStorage via AdminBrandProvider), so it hydrates with brand 1. The
+  // client component re-fetches with the active brand id on brand switch
+  // through the existing ['admin'] query invalidation.
   const result = await adminFetchServer('/admin/funnel-templates?brand_id=1')
 
   await queryClient.prefetchQuery({

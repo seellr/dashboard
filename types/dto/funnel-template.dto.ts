@@ -1,5 +1,13 @@
 import { z } from 'zod'
 
+const FunnelTemplateTranslationsSchema = z.object({
+  tripwire_headline: z.string().nullable().optional(),
+  bump_headline: z.string().nullable().optional(),
+  bump_description: z.string().nullable().optional(),
+  oto_headline: z.string().nullable().optional(),
+  downsell_headline: z.string().nullable().optional(),
+})
+
 export const FunnelTemplateSchema = z.object({
   ulid: z.string(),
   name: z.string(),
@@ -14,6 +22,10 @@ export const FunnelTemplateSchema = z.object({
   downsell_price: z.union([z.string(), z.number()]).nullable(),
   downsell_product_ulid: z.string().nullable(),
   premium_bridge_redirect_url: z.string().nullable(),
+  translations: z.object({
+    ar: FunnelTemplateTranslationsSchema,
+    en: FunnelTemplateTranslationsSchema,
+  }).nullable().optional(),
   created_at: z.string(),
 })
 export type FunnelTemplate = z.infer<typeof FunnelTemplateSchema>
@@ -30,5 +42,9 @@ export const CreateFunnelTemplateSchema = z.object({
   downsell_price: z.number().nullable().optional(),
   downsell_product_ulid: z.string().nullable().optional(),
   premium_bridge_redirect_url: z.string().url().nullable().optional(),
+  translations: z.object({
+    ar: FunnelTemplateTranslationsSchema.optional(),
+    en: FunnelTemplateTranslationsSchema.optional(),
+  }).optional(),
 })
 export type CreateFunnelTemplateInput = z.infer<typeof CreateFunnelTemplateSchema>
