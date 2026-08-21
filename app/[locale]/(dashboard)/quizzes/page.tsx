@@ -1,15 +1,6 @@
 import { adminFetchServer } from '@/lib/admin/api-server'
 import { QuizzesClient } from '@/components/admin/quizzes/QuizzesClient'
-
-interface Quiz {
-  ulid: string
-  slug: string
-  type: number
-  active: boolean
-  title: string
-  description: string | null
-  created_at: string
-}
+import type { Quiz } from '@/types/dto/quiz.dto'
 
 export default async function AdminQuizzesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
