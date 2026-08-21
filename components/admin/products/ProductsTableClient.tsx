@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/admin/shared/DataTable'
+import { DataTable } from '@/components/ui/data-table'
 import { useProductsQuery } from '@/hooks/queries/useProducts'
 import { DeleteProductDialogClient } from './DeleteProductDialogClient'
 import { ProductSlidePanel } from './ProductSlidePanel'
@@ -116,7 +116,7 @@ export function ProductsTableClient({ locale }: { locale: string }) {
       <DataTable
         columns={columns}
         data={filtered}
-        searchPlaceholder={t('table.search') ?? 'Search products…'}
+        search={{ placeholder: t('table.search') ?? 'Search products…' }}
         toolbar={
           <div className="flex gap-2">
             <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? 'all')}>

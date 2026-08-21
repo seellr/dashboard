@@ -7,7 +7,7 @@ export function useProductsAllQuery() {
   return useQuery({
     queryKey: ['admin', 'products', 'all'],
     queryFn: async () => {
-      const result = await adminFetchClient<Product[]>('/products?per_page=200')
+      const result = await adminFetchClient<Product[]>('/products?per_page=100')
       if (!result.ok) return []
       return result.data
     },

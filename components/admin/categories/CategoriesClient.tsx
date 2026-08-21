@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from '@tanstack/react-query'
 import { type ColumnDef } from '@tanstack/react-table'
 import { adminFetchClient } from '@/lib/admin/api-client'
-import { DataTable } from '@/components/admin/shared/DataTable'
+import { DataTable } from '@/components/ui/data-table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -197,7 +197,7 @@ export function CategoriesClient({ locale, initialCategories }: CategoriesClient
       <DataTable
         columns={columns}
         data={initialCategories}
-        searchPlaceholder="Search categories…"
+        search={{ placeholder: 'Search categories…' }}
       />
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) closeDialog() }}>
