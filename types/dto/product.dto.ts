@@ -21,6 +21,7 @@ export const ProductTranslationsSchema = z.object({
 
 // ── Response shape (GET) ────────────────────────────────────────────────────
 export const ProductSchema = z.object({
+  id: z.union([z.number(), z.string()]).optional(),
   ulid: z.string(),
   slug: z.string(),
   brand_id: z.number().nullable(),
