@@ -1,52 +1,44 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { adminFetchClient } from '@/lib/admin/api-client'
+import {
+  bulkDeleteMedia,
+  deleteMedia,
+  deleteProductGalleryImage,
+  getFolders,
+  getMedia,
+  listMedia,
+  updateMedia,
+  uploadMedia,
+  uploadMediaMultiple,
+  uploadProductGalleryImage,
+  uploadProductHeroImage,
+  type ListMediaParams,
+  type UploadMediaOptions,
+} from '@/lib/admin/media-client'
+import type { MediaResource, UpdateMediaInput } from '@/types/dto/media.dto'
 
-export interface MediaItem {
-  ulid: string
-  name: string
-  original_name: string
-  url: string
-  thumb_url: string | null
-  mime_type: string
-  file_size: number
-  file_size_kb: number
-  width: number | null
-  height: number | null
-  alt_text: string | null
-  folder: string | null
-  is_image: boolean
-  created_at: string
+export type { MediaResource, UpdateMediaInput }
+export type MediaItem = MediaResource
+
+export const mediaQueryKeys = {
+  all: ['admin', 'media'] as const,
+  lists: () => [...mediaQueryKeys.all, 'list'] as const,
+  list: (params?: ListMediaParams) => [...mediaQueryKeys.lists(), params ?? {}] as const,
+  folders: () => [...mediaQueryKeys.all, 'folders'] as const,
+  detail: (ulid: string) => [...mediaQueryKeys.all, 'detail', ulid] as const,
+  productImages: (productUlid: string) => ['admin', 'products', productUlid, 'images'] as const,
 }
 
-interface ApiMeta {
-  per_page: number
-  next_cursor: string | null
-  has_more: boolean
-}
-
-export const mediaQueryKey = (folder?: string, search?: string, type?: string) =>
-  ['admin', 'media', folder ?? null, search ?? null, type ?? null] as const
-
-export function useMediaList(params?: { folder?: string; search?: string; type?: string }) {
-  const qs = new URLSearchParams()
-  if (params?.folder) qs.set('folder', params.folder)
-  if (params?.search) qs.set('search', params.search)
-  if (params?.type) qs.set('type', params.type)
-  const queryString = qs.toString() ? `?${qs.toString()}` : ''
-
+export function useMediaList(params?: ListMediaParams) {
   return useQuery({
-    queryKey: mediaQueryKey(params?.folder, params?.search, params?.type),
+    queryKey: mediaQueryKeys.list(params),
     queryFn: async () => {
-      // Backend returns { success: true, data: [...items], meta: { per_page, next_cursor, has_more } }
-      // adminFetchClient maps: result.data = json.data (the items array), result.meta = json.meta
-      const result = await adminFetchClient<MediaItem[]>(`/media${queryString}`)
-      if (!result.ok) throw new Error(result.message)
-      const meta = result.meta as ApiMeta | undefined
+      const res = await listMedia(params)
+      if (!res.ok) {
+        throw new Error(res.message || 'Failed to fetch media list')
+      }
       return {
-        items: result.data ?? [],
-        per_page: meta?.per_page ?? 20,
-        next_cursor: meta?.next_cursor ?? null,
-        has_more: meta?.has_more ?? false,
+        items: res.data ?? [],
+        meta: res.meta ?? { per_page: 20, next_cursor: null, has_more: false },
       }
     },
     staleTime: 30_000,
@@ -55,36 +47,83 @@ export function useMediaList(params?: { folder?: string; search?: string; type?:
 
 export function useMediaFolders() {
   return useQuery({
-    queryKey: ['admin', 'media', 'folders'],
+    queryKey: mediaQueryKeys.folders(),
     queryFn: async () => {
-      const result = await adminFetchClient<string[]>('/media/folders')
-      if (!result.ok) throw new Error(result.message)
-      return result.data ?? []
+      const res = await getFolders()
+      if (!res.ok) {
+        throw new Error(res.message || 'Failed to fetch media folders')
+      }
+      return res.data ?? []
     },
     staleTime: 60_000,
+  })
+}
+
+export function useMediaItem(ulid?: string | null) {
+  return useQuery({
+    queryKey: mediaQueryKeys.detail(ulid ?? ''),
+    queryFn: async () => {
+      if (!ulid) return null
+      const res = await getMedia(ulid)
+      if (!res.ok) throw new Error(res.message || 'Failed to fetch media item')
+      return res.data
+    },
+    enabled: Boolean(ulid),
   })
 }
 
 export function useUploadMedia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ file, folder, altText }: { file: File; folder?: string; altText?: string }) => {
-      const form = new FormData()
-      form.append('file', file)
-      if (folder) form.append('folder', folder)
-      if (altText) form.append('alt_text', altText)
-
-      const locale = typeof document !== 'undefined' ? document.documentElement.lang : 'en'
-      const res = await fetch('/api/admin/media/upload', {
-        method: 'POST',
-        headers: { 'x-locale': locale },
-        body: form,
-      })
-      const json = await res.json().catch(() => ({}))
-      return { ok: res.ok && json.success, data: json.data as MediaItem, message: json.message }
+    mutationFn: ({
+      file,
+      options,
+      onProgress,
+      signal,
+    }: {
+      file: File
+      options?: UploadMediaOptions
+      onProgress?: (percent: number) => void
+      signal?: AbortSignal
+    }) => uploadMedia(file, options, onProgress, signal),
+    onSuccess: (res) => {
+      if (res.ok) {
+        qc.invalidateQueries({ queryKey: mediaQueryKeys.all })
+      }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'media'] })
+  })
+}
+
+export function useUploadMediaMultiple() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      files,
+      options,
+      onProgress,
+      signal,
+    }: {
+      files: File[]
+      options?: { folder?: string }
+      onProgress?: (percent: number) => void
+      signal?: AbortSignal
+    }) => uploadMediaMultiple(files, options, onProgress, signal),
+    onSuccess: (res) => {
+      if (res.ok) {
+        qc.invalidateQueries({ queryKey: mediaQueryKeys.all })
+      }
+    },
+  })
+}
+
+export function useUpdateMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ulid, data }: { ulid: string; data: UpdateMediaInput }) =>
+      updateMedia(ulid, data),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: mediaQueryKeys.all })
+      qc.invalidateQueries({ queryKey: mediaQueryKeys.detail(vars.ulid) })
     },
   })
 }
@@ -92,9 +131,78 @@ export function useUploadMedia() {
 export function useDeleteMedia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (ulid: string) => adminFetchClient(`/media/${ulid}`, { method: 'DELETE' }),
+    mutationFn: (ulid: string) => deleteMedia(ulid),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'media'] })
+      qc.invalidateQueries({ queryKey: mediaQueryKeys.all })
+    },
+  })
+}
+
+export function useBulkDeleteMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ulids: string[]) => bulkDeleteMedia(ulids),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: mediaQueryKeys.all })
+    },
+  })
+}
+
+export function useUploadHeroImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      productUlid,
+      file,
+      onProgress,
+      signal,
+    }: {
+      productUlid: string
+      file: File
+      onProgress?: (percent: number) => void
+      signal?: AbortSignal
+    }) => uploadProductHeroImage(productUlid, file, onProgress, signal),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'products', vars.productUlid] })
+      qc.invalidateQueries({ queryKey: ['admin', 'products'] })
+    },
+  })
+}
+
+export function useUploadGalleryImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      productUlid,
+      file,
+      altText,
+      onProgress,
+      signal,
+    }: {
+      productUlid: string
+      file: File
+      altText?: string
+      onProgress?: (percent: number) => void
+      signal?: AbortSignal
+    }) => uploadProductGalleryImage(productUlid, file, altText, onProgress, signal),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'products', vars.productUlid] })
+    },
+  })
+}
+
+export function useDeleteGalleryImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      productUlid,
+      imageId,
+    }: {
+      productUlid: string
+      imageId: number | string
+    }) => deleteProductGalleryImage(productUlid, imageId),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'products', vars.productUlid] })
     },
   })
 }
