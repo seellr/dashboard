@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getAdminTokenCookie } from '@/lib/admin/auth'
-import { AdminQueryProvider } from '@/lib/admin/query-provider'
+import { QueryProvider } from '@/lib/admin/query-provider'
 import { AdminShellClient } from '@/components/admin/AdminShellClient'
 import { AdminBrandProvider } from '@/lib/admin/brand-context'
 import { Toaster } from 'sileo'
@@ -23,11 +23,11 @@ export default async function AdminDashboardLayout({
   }
 
   return (
-    <AdminQueryProvider>
+    <QueryProvider>
       <AdminBrandProvider>
         <AdminShellClient locale={locale}>{children}</AdminShellClient>
         <Toaster />
       </AdminBrandProvider>
-    </AdminQueryProvider>
+    </QueryProvider>
   )
 }

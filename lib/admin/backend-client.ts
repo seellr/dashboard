@@ -9,13 +9,26 @@ export const BACKEND_API_KEY = process.env.API_KEY ?? ''
  * "en"/"ar" accepted; anything else 4xxs). Centralized here so no call
  * site duplicates or drifts on these two headers.
  */
-export function backendHeaders(locale: string, token?: string | null): HeadersInit {
+export function backendHeaders(locale: string, token?: string | null, brandId: string = '1'): HeadersInit {
   return {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'x-api-key': BACKEND_API_KEY,
     'Accept-Language': locale === 'ar' || locale === 'en' ? locale : 'en',
-    'X-Brand-Id': '1',
+    'X-Brand-Id': brandId || '1',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 }
+
+export function backendMultipartHeaders(locale: string, token?: string | null, brandId: string = '1'): HeadersInit {
+  return {
+    Accept: 'application/json',
+    'x-api-key': BACKEND_API_KEY,
+    'Accept-Language': locale === 'ar' || locale === 'en' ? locale : 'en',
+    'X-Brand-Id': brandId || '1',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
+
+
