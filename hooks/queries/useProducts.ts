@@ -1,202 +1,286 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { adminFetchClient } from '@/lib/admin/api-client'
-import type { ApiMeta, ApiResult } from '@/lib/admin/api-server'
+import {
+  addProductBundleItem,
+  addProductCrmTag,
+  createProduct,
+  createProductAsset,
+  createProductFaq,
+  createProductTestimonial,
+  deleteProduct,
+  deleteProductAsset,
+  deleteProductBundleItem,
+  deleteProductCrmTag,
+  deleteProductFaq,
+  deleteProductTestimonial,
+  getProduct,
+  getProductBundleItems,
+  listProducts,
+  updateProduct,
+  updateProductDelivery,
+  updateProductDescription,
+  updateProductFunnel,
+  updateProductSeo,
+  updateProductVisibility,
+  type ListProductsParams,
+} from '@/lib/admin/products-client'
 import type {
   CreateProductInput,
   Product,
-  UpdateProductInput,
-  ProductDescriptionInput,
-  ProductSeoInput,
-  ProductDeliveryInput,
   ProductAssetInput,
-  ProductTestimonialInput,
+  ProductBundleItemInput,
+  ProductCrmTagInput,
+  ProductDeliveryInput,
+  ProductDescriptionInput,
   ProductFaqInput,
+  ProductSeoInput,
+  ProductTestimonialInput,
+  ProductVisibilityInput,
+  UpdateProductInput,
 } from '@/types/dto/product.dto'
 
+export const productKeys = {
+  all: ['admin', 'products'] as const,
+  lists: () => [...productKeys.all, 'list'] as const,
+  list: (params?: ListProductsParams) => [...productKeys.lists(), params ?? {}] as const,
+  details: () => [...productKeys.all, 'detail'] as const,
+  detail: (ulid: string) => [...productKeys.details(), ulid] as const,
+  bundleItems: (ulid: string) => [...productKeys.detail(ulid), 'bundle-items'] as const,
+}
+
+// Backward-compatible query keys
 export const productsQueryKey = (cursor?: string) => ['admin', 'products', cursor ?? null] as const
 export const productQueryKey = (ulid: string) => ['admin', 'product', ulid] as const
 
+export function useProductsQuery(params?: ListProductsParams | string) {
+  const queryParams = typeof params === 'string' ? { cursor: params } : params
 
-async function unwrap<T>(pending: Promise<ApiResult<T>>): Promise<T> {
-  const result = await pending
-  if (!result.ok) throw new Error(result.message)
-  return result.data
-}
-
-export function useProductsQuery(cursor?: string) {
   return useQuery({
-    queryKey: productsQueryKey(cursor),
+    queryKey: productKeys.list(queryParams),
     queryFn: async () => {
-      const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''
-      const result = await adminFetchClient<Product[]>(`/products${qs}`)
-      if (!result.ok) throw new Error(result.message)
-      return { items: result.data, meta: result.meta as ApiMeta | undefined }
+      const res = await listProducts(queryParams)
+      if (!res.ok) {
+        throw new Error(res.message || 'Failed to fetch products')
+      }
+      return {
+        items: res.data ?? [],
+        meta: res.meta,
+      }
     },
+    staleTime: 30_000,
   })
 }
 
-export function useProductQuery(ulid: string) {
+export function useProductQuery(ulid: string | null | undefined) {
   return useQuery({
-    queryKey: productQueryKey(ulid),
-    queryFn: () => unwrap(adminFetchClient<Product>(`/products/${ulid}`)),
-    enabled: ulid !== 'new',
+    queryKey: productKeys.detail(ulid ?? ''),
+    queryFn: async () => {
+      if (!ulid || ulid === 'new') return null
+      const res = await getProduct(ulid)
+      if (!res.ok) {
+        throw new Error(res.message || 'Failed to fetch product')
+      }
+      return res.data
+    },
+    enabled: Boolean(ulid && ulid !== 'new'),
   })
 }
 
 export function useCreateProduct() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: CreateProductInput) =>
-      adminFetchClient<Product>('/products', { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: (result) => {
-      if (result.ok) queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+    mutationFn: (input: CreateProductInput) => createProduct(input),
+    onSuccess: (res) => {
+      if (res.ok) {
+        qc.invalidateQueries({ queryKey: productKeys.all })
+      }
     },
   })
 }
 
 export function useUpdateProduct(ulid: string) {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: UpdateProductInput) =>
-      adminFetchClient<Product>(`/products/${ulid}`, { method: 'PUT', body: JSON.stringify(input) }),
-    onSuccess: (result) => {
-      if (result.ok) {
-        queryClient.setQueryData(productQueryKey(ulid), result.data)
-        queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+    mutationFn: (input: UpdateProductInput) => updateProduct(ulid, input),
+    onSuccess: (res) => {
+      if (res.ok) {
+        qc.setQueryData(productKeys.detail(ulid), res.data)
+        qc.invalidateQueries({ queryKey: productKeys.all })
       }
     },
   })
 }
 
 export function useDeleteProduct() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (ulid: string) => adminFetchClient<null>(`/products/${ulid}`, { method: 'DELETE' }),
+    mutationFn: (ulid: string) => deleteProduct(ulid),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      qc.invalidateQueries({ queryKey: productKeys.all })
     },
   })
 }
 
 export function useUpsertProductDescription(ulid: string) {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductDescriptionInput) =>
-      adminFetchClient(`/products/${ulid}/description`, { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: (input: ProductDescriptionInput) => updateProductDescription(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
 export function useUpsertProductSeo(ulid: string) {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductSeoInput) =>
-      adminFetchClient(`/products/${ulid}/seo`, { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: (input: ProductSeoInput) => updateProductSeo(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
 export function useUpsertProductDelivery(ulid: string) {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductDeliveryInput) =>
-      adminFetchClient(`/products/${ulid}/delivery`, { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: (input: ProductDeliveryInput) => updateProductDelivery(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
-export function useProductDescription(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'description'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>>(`/products/${ulid}/description`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useProductSeo(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'seo'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>>(`/products/${ulid}/seo`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useProductDelivery(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'delivery'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>>(`/products/${ulid}/delivery`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useProductAssets(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'assets'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>[]>(`/products/${ulid}/assets`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useAddProductAsset(ulid: string) {
-  const queryClient = useQueryClient()
+export function useUpsertProductFunnel(ulid: string) {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductAssetInput) =>
-      adminFetchClient(`/products/${ulid}/assets`, { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'assets'] }),
+    mutationFn: (input: Record<string, unknown>) => updateProductFunnel(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useCreateProductAsset(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProductAssetInput) => createProductAsset(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
 export function useDeleteProductAsset(ulid: string) {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (assetId: number) =>
-      adminFetchClient(`/products/${ulid}/assets/${assetId}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'assets'] }),
+    mutationFn: (assetId: string | number) => deleteProductAsset(ulid, assetId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
-export function useProductTestimonials(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'testimonials'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>[]>(`/products/${ulid}/testimonials`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useAddProductTestimonial(ulid: string) {
-  const queryClient = useQueryClient()
+export function useCreateProductFaq(ulid: string) {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductTestimonialInput) =>
-      adminFetchClient(`/products/${ulid}/testimonials`, { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'testimonials'] }),
-  })
-}
-
-export function useDeleteProductTestimonial(ulid: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: number) =>
-      adminFetchClient(`/products/${ulid}/testimonials/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'testimonials'] }),
-  })
-}
-
-export function useProductFaqs(ulid: string) {
-  return useQuery({
-    queryKey: ['admin', 'products', ulid, 'faqs'],
-    queryFn: () => unwrap(adminFetchClient<Record<string, unknown>[]>(`/products/${ulid}/faqs`)),
-    enabled: ulid !== 'new',
-  })
-}
-
-export function useAddProductFaq(ulid: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: ProductFaqInput) =>
-      adminFetchClient(`/products/${ulid}/faqs`, { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'faqs'] }),
+    mutationFn: (input: ProductFaqInput) => createProductFaq(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }
 
 export function useDeleteProductFaq(ulid: string) {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) =>
-      adminFetchClient(`/products/${ulid}/faqs/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products', ulid, 'faqs'] }),
+    mutationFn: (faqId: string | number) => deleteProductFaq(ulid, faqId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useCreateProductTestimonial(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProductTestimonialInput) => createProductTestimonial(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useDeleteProductTestimonial(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (testimonialId: string | number) => deleteProductTestimonial(ulid, testimonialId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useProductBundleItems(ulid: string) {
+  return useQuery({
+    queryKey: productKeys.bundleItems(ulid),
+    queryFn: async () => {
+      if (!ulid) return []
+      const res = await getProductBundleItems(ulid)
+      if (!res.ok) throw new Error(res.message || 'Failed to fetch bundle items')
+      return res.data ?? []
+    },
+    enabled: Boolean(ulid),
+  })
+}
+
+export function useAddProductBundleItem(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProductBundleItemInput) => addProductBundleItem(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.bundleItems(ulid) })
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useDeleteProductBundleItem(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (itemUlid: string) => deleteProductBundleItem(ulid, itemUlid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.bundleItems(ulid) })
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useAddProductCrmTag(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProductCrmTagInput) => addProductCrmTag(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useDeleteProductCrmTag(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (tagId: string | number) => deleteProductCrmTag(ulid, tagId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useUpdateProductVisibility(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProductVisibilityInput) => updateProductVisibility(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
   })
 }

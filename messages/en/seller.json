@@ -1,0 +1,175 @@
+{
+  "nav": {
+    "group": {
+      "store": "Store",
+      "content": "Content",
+      "account": "Account",
+      "growth": "Growth",
+      "comingSoon": "Coming soon"
+    },
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "media": "Media",
+    "theme": "Theme",
+    "domains": "Domains",
+    "settings": "Settings",
+    "orders": "Orders",
+    "coupons": "Coupons",
+    "vat": "VAT",
+    "crm": "CRM",
+    "email": "Email",
+    "automation": "Automation",
+    "analytics": "Analytics",
+    "funnels": "Funnels",
+    "logout": "Log out",
+    "comingSoon": "Coming soon"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "comingSoon": "Coming soon"
+  },
+  "auth": {
+    "common": {
+      "brand": "Seller Center",
+      "backToLogin": "Back to sign in",
+      "goToLogin": "Go to sign in",
+      "loading": "Please wait…",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "login": {
+      "title": "Seller sign in",
+      "subtitle": "Sign in to manage your store.",
+      "identifier": "Email or phone",
+      "identifierPlaceholder": "you@example.com or +201001234567",
+      "password": "Password",
+      "submit": "Sign in",
+      "invalidCredentials": "Invalid email/phone or password.",
+      "emailNotVerified": "Please verify your email before signing in.",
+      "accountInactive": "This account is not active. Please contact support.",
+      "sessionExpired": "Your session expired. Please sign in again.",
+      "forgot": "Forgot your password?",
+      "noAccount": "Don't have a seller account?",
+      "registerLink": "Create one",
+      "google": "Continue with Google",
+      "googleUnavailable": "Google sign-in is currently unavailable.",
+      "rateLimited": "Too many attempts. Please try again shortly.",
+      "genericError": "Could not sign in. Please try again.",
+      "network": "Network error. Please try again.",
+      "heroText": "Your store, your rules. Start selling today.",
+      "adminLink": "Admin login"
+    },
+    "register": {
+      "title": "Create a seller account",
+      "subtitle": "Start selling with your own store.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone number",
+      "phoneHint": "Use international format, e.g. +201001234567",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account",
+      "success": "If this email can be registered, we sent a verification link.",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "rateLimited": "Too many attempts. Please try again shortly.",
+      "genericError": "Could not create the account. Please try again.",
+      "network": "Network error. Please try again."
+    },
+    "checkEmail": {
+      "title": "Check your inbox",
+      "message": "If this email can be registered, we sent a verification link. Check your inbox and spam folder.",
+      "verifyMessage": "Please verify your email before signing in. We already sent you a verification link.",
+      "goToLogin": "Go to sign in",
+      "noResend": "Didn't receive it? Check your spam folder. Resending is not available yet."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we will send a reset link if an account exists.",
+      "submit": "Send reset link",
+      "neutral": "If an account exists for this email, we sent a password reset link.",
+      "backToLogin": "Back to sign in",
+      "rateLimited": "Too many attempts. Please try again shortly.",
+      "genericError": "Could not send the reset link. Please try again.",
+      "network": "Network error. Please try again."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "subtitle": "Enter and confirm your new password.",
+      "submit": "Update password",
+      "success": "Your password was updated. You can now sign in.",
+      "invalidToken": "This reset link is invalid or expired.",
+      "missingToken": "This reset link is missing required information.",
+      "backToLogin": "Back to sign in",
+      "rateLimited": "Too many attempts. Please try again shortly.",
+      "genericError": "Could not update the password. Please try again.",
+      "network": "Network error. Please try again."
+    },
+    "verify": {
+      "title": "Verify your email",
+      "verifying": "Verifying your email…",
+      "successTitle": "Email verified",
+      "successMessage": "Your email is verified. You can now sign in.",
+      "errorTitle": "Verification failed",
+      "errorMessage": "This verification link is invalid or expired.",
+      "goToLogin": "Go to sign in"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "name_invalid": "Use 2–100 letters, spaces, hyphens, apostrophes, or periods.",
+      "email_invalid": "Enter a valid email address.",
+      "email_too_long": "This email is too long.",
+      "phone_invalid": "Enter a valid international phone number, e.g. +201001234567.",
+      "password_length": "Password must be 8–128 characters.",
+      "password_weak": "Include uppercase, lowercase, a number, and a symbol.",
+      "password_mismatch": "Passwords do not match.",
+      "identifier_too_long": "This value is too long.",
+      "token_too_long": "This link is invalid.",
+      "invalid_link": "This verification link is invalid."
+    },
+    "passwordChecklist": {
+      "length": "8–128 characters",
+      "upper": "One uppercase letter",
+      "lower": "One lowercase letter",
+      "digit": "One number",
+      "symbol": "One symbol"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Your seller dashboard is being set up. Account, plan, and store status will appear here."
+  },
+  "tenant": {
+    "title": "Store status",
+    "active": "Active",
+    "suspended": "Suspended",
+    "provisioning": "Provisioning",
+    "failed": "Failed",
+    "unavailable": "Your store is temporarily unavailable.",
+    "notReady": "Your store database is not ready yet.",
+    "connectionFailed": "We could not connect to your store. Please retry."
+  },
+  "storeUnavailable": {
+    "title": "Store unavailable",
+    "description": "Your store is not ready. This can happen while provisioning, after a failure, or while suspended.",
+    "retry": "Retry"
+  },
+  "phasePlaceholder": {
+    "title": "Coming in the next step",
+    "description": "This section is part of the seller build and will be connected in a later step."
+  },
+  "errors": {
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You do not have permission to perform this action.",
+    "notFound": "Not found.",
+    "tenantNotReady": "Your store is not ready yet.",
+    "rateLimited": "Too many requests. Please try again shortly.",
+    "server": "Something went wrong. Please try again.",
+    "network": "Network error. Please retry."
+  }
+}
