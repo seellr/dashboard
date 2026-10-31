@@ -36,7 +36,7 @@ export const ALLOWED_MEDIA_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const
 
-export const MAX_MEDIA_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+export const MAX_MEDIA_FILE_SIZE = 20 * 1024 * 1024 // Backend limit: 20MB
 export const MAX_MEDIA_BATCH_COUNT = 20
 
 export const ALLOWED_PRODUCT_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'] as const

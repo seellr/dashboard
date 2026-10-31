@@ -49,7 +49,9 @@
     "terms": "الشروط",
     "and": "و",
     "privacy": "سياسة الخصوصية",
-    "heroText": "أدر كل علاماتك التجارية ومنتجاتك وطلباتك من مكان واحد."
+    "heroText": "أدر كل علاماتك التجارية ومنتجاتك وطلباتك من مكان واحد.",
+    "sellerPrompt": "هل أنت بائع؟",
+    "sellerLink": "تسجيل الدخول إلى حساب البائع"
   },
   "products": {
     "title": "المنتجات",
@@ -271,6 +273,49 @@
       "themeNotFound": "القالب غير موجود."
     }
   },
+  "themeBuilder": {
+    "title": "القوالب",
+    "description": "اختر قالب واجهة متجرك وفعّله.",
+    "loading": "جارٍ تحميل القوالب...",
+    "empty": "لا توجد قوالب منشورة متاحة.",
+    "loadError": "تعذر تحميل القوالب. يرجى المحاولة مرة أخرى.",
+    "storeUnavailable": "متجرك غير متاح مؤقتًا. يرجى المحاولة بعد قليل.",
+    "retry": "إعادة المحاولة",
+    "loadMore": "تحميل المزيد",
+    "details": "التفاصيل",
+    "activate": "تفعيل",
+    "activated": "مفعّل",
+    "active": "نشط",
+    "activeTheme": "النشط: {name}",
+    "noDescription": "لا يوجد وصف متاح.",
+    "confirmTitle": "تفعيل هذا القالب؟",
+    "confirmDescription": "سيصبح {name} القالب النشط لواجهة متجرك.",
+    "confirm": "تفعيل القالب",
+    "cancel": "إلغاء",
+    "activating": "جارٍ التفعيل...",
+    "activateError": "تعذر تفعيل القالب. يرجى المحاولة مرة أخرى.",
+    "previewDraft": "معاينة المسودة",
+    "copyPreviewLink": "نسخ رابط المعاينة",
+    "publish": "نشر",
+    "publishing": "جارٍ النشر...",
+    "discard": "تجاهل التغييرات",
+    "discarding": "جارٍ التجاهل...",
+    "publishConfirmTitle": "نشر هذا القالب؟",
+    "publishConfirmDescription": "ستصبح المسودة المحفوظة قالب واجهة المتجر المباشر.",
+    "discardConfirmTitle": "تجاهل التغييرات غير المنشورة؟",
+    "discardConfirmDescription": "سيؤدي ذلك إلى استعادة آخر مسودة محفوظة ولا يمكن التراجع عنه.",
+    "publishError": "تعذر إكمال العملية. يرجى المحاولة مرة أخرى.",
+    "stringsTitle": "نصوص واجهة القالب",
+    "stringsDescription": "إدارة التخصيصات العربية والإنجليزية للقالب النشط.",
+    "stringsCount": "{count} نصوص",
+    "stringsEmpty": "لا توجد تخصيصات.",
+    "stringsError": "تعذر تحميل نصوص القالب.",
+    "importStrings": "استيراد JSON",
+    "importConfirmTitle": "استبدال جميع التخصيصات؟",
+    "importConfirmDescription": "سيؤدي ذلك إلى استبدال جميع تخصيصات هذه اللغة بـ {count} نصوص مستوردة.",
+    "confirmImport": "استيراد واستبدال",
+    "importing": "جارٍ الاستيراد..."
+  },
   "media": {
     "title": "مكتبة الوسائط",
     "upload": "رفع",
@@ -338,4 +383,4 @@
       "invalidFolder": "اسم المجلد يحتوي على أحرف غير صالحة."
     }
   }
-}
+}

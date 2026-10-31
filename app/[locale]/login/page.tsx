@@ -20,6 +20,15 @@ export default async function AdminLoginPage({ params }: { params: Promise<{ loc
             <h1 className="text-2xl font-semibold">{t('login.title')}</h1>
           </div>
           <LoginFormClient locale={locale} />
+          <p className="text-sm text-muted-foreground">
+            {t('login.sellerPrompt')}{' '}
+            <Link
+              href={`/${locale}/seller/login`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {t('login.sellerLink')}
+            </Link>
+          </p>
         </div>
       </div>
 

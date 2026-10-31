@@ -1,0 +1,3 @@
+[data-section-id] { position: relative; }
+[data-section-id]::after { content: ''; pointer-events: none; position: absolute; inset: 0; border: 1px solid transparent; }
+[data-section-id]:hover::after, [data-section-id][data-selected='true']::after { border-color: var(--theme-primary, #2563eb); }
