@@ -1,24 +1,25 @@
-import type { BuilderPage, Locale, ThemeSchema } from './builder'
+import type { BuilderPage, Locale, ThemeRuntimeSettings, ThemeSchema } from './builder'
 
 export const PREVIEW_SOURCE = 'seller-theme-preview'
+export const PREVIEW_PROTOCOL_VERSION = 1
 
 export type EditorToPreviewMessage =
-  | { source: typeof PREVIEW_SOURCE; type: 'INIT'; page: BuilderPage; schema: ThemeSchema; locale: Locale }
-  | { source: typeof PREVIEW_SOURCE; type: 'UPDATE_PAGE'; page: BuilderPage }
-  | { source: typeof PREVIEW_SOURCE; type: 'UPDATE_SETTINGS'; sectionId: string; settings: Record<string, unknown> }
-  | { source: typeof PREVIEW_SOURCE; type: 'SELECT_SECTION'; sectionId: string | null }
-  | { source: typeof PREVIEW_SOURCE; type: 'SET_LOCALE'; locale: Locale }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'INIT'; page: BuilderPage; schema: ThemeSchema; themeSettings: ThemeRuntimeSettings; locale: Locale }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'UPDATE_PAGE'; page: BuilderPage }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'UPDATE_SETTINGS'; themeSettings: ThemeRuntimeSettings }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SELECT_SECTION'; sectionId: string | null }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SET_LOCALE'; locale: Locale }
 
 export type PreviewToEditorMessage =
-  | { source: typeof PREVIEW_SOURCE; type: 'READY' }
-  | { source: typeof PREVIEW_SOURCE; type: 'SECTION_CLICKED'; sectionId: string }
-  | { source: typeof PREVIEW_SOURCE; type: 'SECTION_HOVERED'; sectionId: string | null }
-  | { source: typeof PREVIEW_SOURCE; type: 'ERROR'; message: string }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'READY' }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SECTION_CLICKED'; sectionId: string }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SECTION_HOVERED'; sectionId: string | null }
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'ERROR'; message: string }
 
 export function isPreviewMessage(value: unknown): value is { source: typeof PREVIEW_SOURCE; type: string } {
   if (typeof value !== 'object' || value === null) return false
-  const candidate = value as { source?: unknown; type?: unknown }
-  return candidate.source === PREVIEW_SOURCE && typeof candidate.type === 'string'
+  const candidate = value as { source?: unknown; v?: unknown; type?: unknown }
+  return candidate.source === PREVIEW_SOURCE && candidate.v === PREVIEW_PROTOCOL_VERSION && typeof candidate.type === 'string'
 }
 
 export function getAllowedOrigins(): string[] {

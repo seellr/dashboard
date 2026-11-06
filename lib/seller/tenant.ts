@@ -15,19 +15,20 @@ export interface SellerTenantResult {
  */
 export const getSellerTenant = cache(async (): Promise<SellerTenantResult> => {
   const result = await sellerFetchServer<unknown>('/subscriber/tenant')
-  console.log(result)
   if (!result.ok) {
     return { tenant: null, failure: result }
   }
 
   const parsed = TenantSchema.safeParse(result.data)
   if (!parsed.success) {
-    console.error('[seller] Invalid tenant response', parsed.error.flatten())
+    console.error('[seller] Invalid tenant response', {
+      fields: parsed.error.issues.map((issue) => issue.path.join('.')),
+    })
     return {
       tenant: null,
       failure: apiFailure(
-        'Invalid tenant response',
-        'invalid_response',
+        'Unexpected response from server',
+        'bad_backend_shape',
         502,
       ),
     }

@@ -97,11 +97,11 @@ export const CreateProductSchema = z
         message: 'Invalid delivery method',
       }),
     base_price: z
-      .number({ invalid_type_error: 'Base price must be a number' })
+      .number({ error: 'Base price must be a number' })
       .min(0, 'Base price cannot be negative')
       .max(999999.99, 'Base price exceeds maximum limit'),
     sale_price: z
-      .number({ invalid_type_error: 'Sale price must be a number' })
+      .number({ error: 'Sale price must be a number' })
       .min(0, 'Sale price cannot be negative')
       .max(999999.99, 'Sale price exceeds maximum limit')
       .nullable()

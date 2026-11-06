@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { PageRenderer } from '@/renderer/PageRenderer'
-import { getAllowedOrigins, isAllowedOrigin, isPreviewMessage, PREVIEW_SOURCE, type EditorToPreviewMessage } from '@/shared/types/preview-protocol'
+import { getAllowedOrigins, isAllowedOrigin, isPreviewMessage, PREVIEW_PROTOCOL_VERSION, PREVIEW_SOURCE, type EditorToPreviewMessage } from '@/shared/types/preview-protocol'
 import type { BuilderPage, Locale, ThemeSchema } from '@/shared/types/builder'
 
 export function PreviewPageClient({ initialLocale }: { initialLocale: Locale }) {
@@ -17,7 +17,7 @@ export function PreviewPageClient({ initialLocale }: { initialLocale: Locale }) 
     const referrerOrigin = document.referrer ? new URL(document.referrer).origin : null
     if (!referrerOrigin || !isAllowedOrigin(referrerOrigin, allowedOrigins)) return
     editorOriginRef.current = referrerOrigin
-    window.parent.postMessage({ source: PREVIEW_SOURCE, type: 'READY' }, referrerOrigin)
+    window.parent.postMessage({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'READY' }, referrerOrigin)
     const handleMessage = (event: MessageEvent<unknown>) => {
       if (event.source !== window.parent || event.origin !== referrerOrigin || !isPreviewMessage(event.data)) return
       const message = event.data as EditorToPreviewMessage
@@ -31,5 +31,5 @@ export function PreviewPageClient({ initialLocale }: { initialLocale: Locale }) 
   }, [])
 
   if (!page || !schema) return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Waiting for preview data...</div>
-  return <PageRenderer page={page} locale={locale} selectedSectionId={selectedSectionId} onSectionClick={(sectionId) => { if (editorOriginRef.current) window.parent.postMessage({ source: PREVIEW_SOURCE, type: 'SECTION_CLICKED', sectionId }, editorOriginRef.current) }} />
+  return <PageRenderer page={page} locale={locale} selectedSectionId={selectedSectionId} onSectionClick={(sectionId) => { if (editorOriginRef.current) window.parent.postMessage({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'SECTION_CLICKED', sectionId }, editorOriginRef.current) }} />
 }

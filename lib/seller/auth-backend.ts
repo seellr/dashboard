@@ -138,7 +138,7 @@ export async function callSubscriberAuth(
       ok: true,
       status: response.status,
       data: envelope.data ?? null,
-      message: envelope.message,
+      message: envelope.message ?? undefined,
     }
   } catch {
     console.error('[seller-auth] Backend connection failed', { path })

@@ -9,7 +9,7 @@ import { createSellerProduct, deleteSellerProduct, listSellerProducts, saveSelle
 const types = ['Ebook', 'Template', 'Playbook', 'Notion System', 'Prompts Pack', 'Bundle', 'Course', 'AI Tool', 'Quiz', 'Audio', 'Membership', 'Challenge', 'Consultation']
 const statuses = ['Draft', 'Published', 'Archived', 'Coming Soon', 'Waitlist']
 
-function statusId(value: SellerProduct['status']): number { return typeof value === 'object' && value !== null ? value.id : typeof value === 'number' ? value : 1 }
+function statusId(value: SellerProduct['status']): number { if (typeof value === 'number') return value; if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value); if (value && typeof value === 'object') return typeof value.id === 'string' ? Number(value.id) : value.id; return 1 }
 
 export function SellerProductWorkspace() {
   const [items, setItems] = useState<SellerProduct[]>([])

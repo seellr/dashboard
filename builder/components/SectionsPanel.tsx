@@ -8,6 +8,7 @@ import { Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useEditorStore } from '@/builder/store/editor-store'
 import type { SectionInstance } from '@/shared/types/builder'
+import { storefrontSectionCatalog } from '@/renderer/section-catalog'
 
 function SortableSection({ section, onSelect }: { section: SectionInstance; onSelect: () => void }) {
   const selected = useEditorStore((state) => state.selectedSectionId === section.id)
@@ -26,5 +27,6 @@ export function SectionsPanel() {
   const [adding, setAdding] = useState(false)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const handleDragEnd = ({ active, over }: DragEndEvent) => { if (over && active.id !== over.id) move(String(active.id), String(over.id)) }
-  return <aside className="flex w-72 shrink-0 flex-col gap-3 border-e p-4"><div className="flex items-center justify-between"><h2 className="font-semibold">Sections</h2><Button variant="outline" size="icon-sm" aria-label="Add section" onClick={() => setAdding((value) => !value)}><Plus /></Button></div>{adding && <div className="grid gap-1 rounded-lg border bg-muted/30 p-2">{['hero', 'product_grid', 'faq', 'rich_text', 'image_text', 'header', 'footer'].map((type) => <Button key={type} variant="ghost" className="justify-start text-start" onClick={() => { add(type); setAdding(false) }}>{type}</Button>)}</div>}<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}><SortableContext items={sections.map((section) => section.id)} strategy={verticalListSortingStrategy}><div className="grid gap-2">{sections.map((section) => <SortableSection key={section.id} section={section} onSelect={() => select(section.id)} />)}</div></SortableContext></DndContext></aside>
+  const locale = useEditorStore((state) => state.locale)
+  return <aside className="flex w-72 shrink-0 flex-col gap-3 border-e p-4"><div className="flex items-center justify-between"><h2 className="font-semibold">Sections</h2><Button variant="outline" size="icon-sm" aria-label="Add section" onClick={() => setAdding((value) => !value)}><Plus /></Button></div>{adding && <div className="grid gap-1 rounded-lg border bg-muted/30 p-2">{storefrontSectionCatalog.map((item) => <Button key={item.type} variant="ghost" className="justify-start text-start" title={item.description[locale]} onClick={() => { add(item.type); setAdding(false) }}>{item.label[locale]}</Button>)}</div>}<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}><SortableContext items={sections.map((section) => section.id)} strategy={verticalListSortingStrategy}><div className="grid gap-2">{sections.map((section) => <SortableSection key={section.id} section={section} onSelect={() => select(section.id)} />)}</div></SortableContext></DndContext></aside>
 }

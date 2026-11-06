@@ -17,7 +17,7 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
   // endpoint (/admin/{scope}/{id}/locale/{locale}/) is defined with one.
   const hasTrailingSlash = request.nextUrl.pathname.endsWith('/')
   const targetUrl = `${BACKEND_API_URL}/admin/${path.join('/')}${hasTrailingSlash ? '/' : ''}${search}`
-  console.log('Target URL:', targetUrl);
+  if (process.env.NODE_ENV !== 'production') console.log(`[admin-proxy] ${request.method} ${targetUrl}`)
 
   const isMultipart = request.headers.get('content-type')?.includes('multipart/form-data')
   const isReadOnly = request.method === 'GET' || request.method === 'DELETE'
@@ -33,7 +33,9 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
       body = await request.text()
     }
   }
-  const res = await fetch(targetUrl, {
+  let res: Response
+  try {
+    res = await fetch(targetUrl, {
     method: request.method,
     headers: {
       Accept: 'application/json',
@@ -45,13 +47,20 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
       ...extraHeaders,
     },
     body,
-  })
-
-  if (res.status === 204 || res.headers.get('content-length') === '0') {
-    return NextResponse.json({ success: true, data: null }, { status: 200 })
+    })
+  } catch {
+    return NextResponse.json({ success: false, message: 'Bad Gateway: backend connection failed', error_code: 'bad_gateway', errors: null }, { status: 502 })
   }
 
-  const json = await res.json().catch(() => ({ success: false, message: 'Parse error', error_code: 'parse_error' }))
+  if (res.status === 204) {
+    return new NextResponse(null, { status: 204 })
+  }
+
+  const text = await res.text()
+  if (!text.trim()) return new NextResponse(null, { status: res.status })
+  let json: unknown
+  try { json = JSON.parse(text) as unknown } catch { return NextResponse.json({ success: false, message: 'Invalid response from upstream server', error_code: 'upstream_invalid_json', errors: null }, { status: 502 }) }
+  if (res.status === 401 && typeof json === 'object' && json !== null && 'message' in json && !('success' in json)) return NextResponse.json({ success: false, message: 'The admin service is unavailable. Please try again later.', error_code: 'service_misconfigured', errors: null }, { status: 502 })
   return NextResponse.json(json, { status: res.status })
 }
 

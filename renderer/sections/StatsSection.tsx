@@ -1,0 +1,3 @@
+import type { Locale, SectionInstance } from '@/shared/types/builder'
+import { settingText } from '../section-utils'
+export function StatsSection({ section, locale }: { section: SectionInstance; locale: Locale }) { return <section className="border-y bg-muted/30 px-6 py-12"><div className="mx-auto grid max-w-6xl gap-8 text-center sm:grid-cols-3">{[1, 2, 3].map((item) => <div key={item}><div className="text-4xl font-bold text-primary">{item === 1 ? '10K+' : item === 2 ? '4.9/5' : '24/7'}</div><p className="mt-2 text-sm text-muted-foreground">{settingText(section.settings, `label_${item}`, locale, locale === 'ar' ? `مؤشر ثقة ${item}` : `Trust metric ${item}`)}</p></div>)}</div></section> }

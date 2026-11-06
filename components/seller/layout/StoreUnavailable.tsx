@@ -10,10 +10,12 @@ export function StoreUnavailable({
   onRetry,
   message,
   polling = false,
+  retryable = false,
 }: {
   onRetry?: () => void
   message?: string
   polling?: boolean
+  retryable?: boolean
 }) {
   const t = useTranslations('seller.storeUnavailable')
   const router = useRouter()
@@ -35,8 +37,13 @@ export function StoreUnavailable({
           {message ?? t('description')}
         </p>
       </div>
-      {onRetry && (
-        <Button type="button" variant="outline" onClick={onRetry} className="gap-2">
+      {(onRetry || retryable) && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onRetry ?? (() => router.refresh())}
+          className="gap-2"
+        >
           <RefreshCw className="size-4" aria-hidden="true" />
           {t('retry')}
         </Button>
