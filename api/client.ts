@@ -41,6 +41,7 @@ export const subscriberThemeApi = {
     builderFetch(`/themes?per_page=15${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, { locale, method: 'GET' }),
   getTheme: (locale: Locale, ulid: string) => builderFetch<ThemeSummary>(`/themes/${ulid}`, { locale, method: 'GET' }),
   getActiveTheme: (locale: Locale) => builderFetch<SubscriberTheme>('/theme', { locale, method: 'GET' }),
+  updateThemeSettings: (locale: Locale, settings: Record<string, unknown>) => builderFetch<SubscriberTheme>('/theme/settings', { locale, method: 'PUT', body: JSON.stringify({ settings }) }),
   getSchema: (locale: Locale) => builderFetch<ThemeSchema>('/theme/schema', { locale, method: 'GET' }),
   listPages: (locale: Locale) => builderFetch<BuilderPage[]>(`/pages?per_page=100`, { locale, method: 'GET' }),
   getDraft: (locale: Locale, pageUlid: string) => builderFetch<BuilderPage>(`/pages/${pageUlid}/draft`, { locale, method: 'GET' }),

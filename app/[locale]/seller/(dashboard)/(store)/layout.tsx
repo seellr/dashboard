@@ -1,7 +1,7 @@
 ﻿import { redirect } from 'next/navigation'
 import { getSubscriberToken } from '@/lib/seller/auth'
 import { getSellerTenant } from '@/lib/seller/tenant'
-import { isTenantActive } from '@/types/dto/tenant.dto'
+import { isTenantActive, isTenantProvisioning } from '@/types/dto/tenant.dto'
 import { StoreUnavailable } from '@/components/seller/layout/StoreUnavailable'
 
 export default async function SellerStoreLayout({
@@ -23,10 +23,28 @@ export default async function SellerStoreLayout({
   if (failure?.status === 401) {
     redirect(`/${locale}/seller/login?expired=1`)
   }
-  console.log(tenant)
-  console.log(isTenantActive(tenant))
+
   // if (!tenant || !isTenantActive(tenant)) {
-  //   return <StoreUnavailable polling={tenant?.status.id === 3 || failure?.errorCode === 'tenant_not_ready'} />
+  //   const provisioning =
+  //     isTenantProvisioning(tenant) ||
+  //     failure?.errorCode === 'tenant_not_ready'
+  //   const connectionFailed =
+  //     failure?.errorCode === 'tenant_connection_failed' ||
+  //     failure?.status === 502
+
+  //   return (
+  //     <StoreUnavailable
+  //       polling={provisioning && !connectionFailed}
+  //       retryable={connectionFailed}
+  //       message={
+  //         connectionFailed
+  //           ? undefined
+  //           : failure?.status && failure.status !== 409
+  //             ? failure.message
+  //             : undefined
+  //       }
+  //     />
+  //   )
   // }
 
   return <>{children}</>

@@ -36,8 +36,17 @@ export const ALLOWED_MEDIA_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const
 
-export const MAX_MEDIA_FILE_SIZE = 20 * 1024 * 1024 // Backend limit: 20MB
+export const MAX_MEDIA_FILE_SIZE = 10 * 1024 * 1024
 export const MAX_MEDIA_BATCH_COUNT = 20
+
+export const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_STORAGE_URL
+  ?? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1').replace(/\/api\/v\d+\/?$/, '')
+
+export function getMediaUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${BACKEND_BASE_URL}${url}`
+}
 
 export const ALLOWED_PRODUCT_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'] as const
 export const ALLOWED_PRODUCT_IMAGE_MIME_TYPES = [

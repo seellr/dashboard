@@ -40,7 +40,7 @@ export async function setImpersonationCookie(
 ): Promise<void> {
   const store = await cookies()
   store.set(SUBSCRIBER_IMPERSONATION_COOKIE_NAME, JSON.stringify(metadata), {
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',

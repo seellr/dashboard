@@ -1,6 +1,6 @@
 ﻿import { redirect } from 'next/navigation'
 import { Toaster } from 'sileo'
-import { getSubscriberToken } from '@/lib/seller/auth'
+import { getImpersonationCookie, getSubscriberToken } from '@/lib/seller/auth'
 import { getSellerTenant } from '@/lib/seller/tenant'
 import { SellerQueryProvider } from '@/lib/seller/query-provider'
 import { SellerShell } from '@/components/seller/layout/SellerShell'
@@ -20,6 +20,7 @@ export default async function SellerDashboardLayout({
   }
 
   const { tenant, failure } = await getSellerTenant()
+  const impersonation = await getImpersonationCookie()
 
   if (failure?.status === 401) {
     redirect(`/${locale}/seller/login?expired=1`)
@@ -30,6 +31,7 @@ export default async function SellerDashboardLayout({
       <SellerShell
         locale={locale}
         tenant={tenant}
+        impersonation={impersonation}
         tenantError={
           failure
             ? { status: failure.status, errorCode: failure.errorCode }

@@ -105,7 +105,7 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
       const res = await createProduct(payload)
       if (res.ok && res.data) {
         onSuccess(res.data.ulid, res.data)
-      } else {
+      } else if (!res.ok) {
         if (res.status === 422 && res.errors) {
           setFormApiErrors(res.errors, setError)
         }
@@ -119,7 +119,7 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
       const res = await updateProduct(product.ulid, payload)
       if (res.ok && res.data) {
         onSuccess(product.ulid, res.data)
-      } else {
+      } else if (!res.ok) {
         if (res.status === 422 && res.errors) {
           setFormApiErrors(res.errors, setError)
         }

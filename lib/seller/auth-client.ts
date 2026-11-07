@@ -69,7 +69,7 @@ async function request<T>(
       return failure(
         response.status,
         envelope.error_code ?? 'request_failed',
-        envelope.message,
+        envelope.message ?? undefined,
         envelope.errors ?? null,
       )
     }

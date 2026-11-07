@@ -1,0 +1,2 @@
+import { PlatformManagementClient } from '@/components/admin/platform/PlatformManagementClient'
+export default async function PlatformPage({ params }: { params: Promise<{ locale: string }> }) { const { locale } = await params; return <div className="space-y-4"><div><h1 className="text-2xl font-semibold">Platform management</h1><p className="mt-1 text-sm text-muted-foreground">Manage admins, subscribers, plans, and support access.</p></div><PlatformManagementClient locale={locale} /></div> }

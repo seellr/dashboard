@@ -21,6 +21,15 @@ function themeVariables(settings: ThemeRuntimeSettings): CSSProperties {
   } as CSSProperties
 }
 
+function sectionsWithAnnouncementAtTop(sections: BuilderPage['sections']) {
+  const visible = sections.filter((section) => !section.hidden)
+  const announcements = visible.filter((section) => section.type === 'announcement')
+  const rest = visible.filter((section) => section.type !== 'announcement')
+  const headerIndex = rest.findIndex((section) => section.type === 'header')
+  if (headerIndex < 0) return [...announcements, ...rest]
+  return [...rest.slice(0, headerIndex), ...announcements, ...rest.slice(headerIndex)]
+}
+
 export function PageRenderer({ page, locale, themeSettings = {}, selectedSectionId, onSectionClick }: PageRendererProps) {
-  return <main dir={locale === 'ar' ? 'rtl' : 'ltr'} lang={locale} style={themeVariables(themeSettings)} className="min-h-full bg-[var(--theme-background)] text-[var(--theme-foreground)] [font-family:var(--theme-font-body)]"><div className="[font-family:var(--theme-font-heading)]">{page.sections.filter((section) => !section.hidden).map((section) => { const Component = getSectionComponent(section.type); return <div key={section.id} data-section-id={section.id} data-selected={selectedSectionId === section.id || undefined} className={selectedSectionId === section.id ? 'relative outline-2 outline-primary outline-offset-[-2px]' : undefined} onClick={() => onSectionClick?.(section.id)}><Component section={section} locale={locale} /></div> })}</div></main>
+  return <main dir={locale === 'ar' ? 'rtl' : 'ltr'} lang={locale} style={themeVariables(themeSettings)} className="min-h-full bg-[var(--theme-background)] text-[var(--theme-foreground)] [font-family:var(--theme-font-body)]"><div className="[font-family:var(--theme-font-heading)]">{sectionsWithAnnouncementAtTop(page.sections).map((section) => { const Component = getSectionComponent(section.type); return <div key={section.id} data-section-id={section.id} data-section-type={section.type} data-selected={selectedSectionId === section.id || undefined} className={`${selectedSectionId === section.id ? 'outline-2 outline-primary outline-offset-[-2px]' : ''} ${section.type === 'header' ? 'sticky top-0 z-30' : ''}`.trim()} onClick={() => onSectionClick?.(section.id)}><Component section={section} locale={locale} /></div> })}</div></main>
 }

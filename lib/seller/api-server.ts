@@ -59,6 +59,19 @@ export async function sellerFetchServer<T>(
       )
     }
 
+    const isBareMessage =
+      typeof payload === 'object' &&
+      payload !== null &&
+      !('success' in payload) &&
+      'message' in payload
+    if (response.status === 401 && isBareMessage) {
+      return apiFailure(
+        'The seller service is unavailable. Please try again later.',
+        'service_misconfigured',
+        502,
+      )
+    }
+
     const envelope = normalizeEnvelope(payload, response.status)
     if (!response.ok || !envelope.success) {
       return apiFailure(
@@ -72,7 +85,7 @@ export async function sellerFetchServer<T>(
     return {
       ok: true,
       data: (envelope.data ?? null) as T,
-      meta: envelope.meta,
+      meta: envelope.meta ? { per_page: envelope.meta.per_page ?? undefined, next_cursor: envelope.meta.next_cursor ?? null, has_more: envelope.meta.has_more ?? false } : undefined,
     }
   } catch {
     return apiFailure(

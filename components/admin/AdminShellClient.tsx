@@ -18,7 +18,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Ticket, LogOut,
   BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle,
   ChevronsUpDown, Settings, User, Languages, ImageIcon, CheckCircle2,
-  Receipt, Loader2Icon,
+  Receipt, Loader2Icon, Palette,
 } from 'lucide-react'
 import { useAdminMe } from '@/hooks/queries/useAdminMe'
 import { useActiveBrand, BRANDS, type Brand } from '@/lib/admin/brand-context'
@@ -56,6 +56,7 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
     items: [
       { key: 'ai-tools', path: (l) => `/${l}/ai-tools`, icon: Bot },
       { key: 'quizzes', path: (l) => `/${l}/quizzes`, icon: HelpCircle },
+      { key: 'theme-builder', path: (l) => `/${l}/theme-builder`, icon: Palette },
       // { key: 'brand', path: (l) => `/${l}/brand`, icon: Palette },
       { key: 'vat', path: (l) => `/${l}/vat`, icon: Receipt },
     ],

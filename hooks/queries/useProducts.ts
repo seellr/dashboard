@@ -123,7 +123,8 @@ export function useDeleteProduct() {
 export function useUpsertProductDescription(ulid: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductDescriptionInput) => updateProductDescription(ulid, input),
+    mutationFn: (input: ProductDescriptionInput | Record<string, unknown>) =>
+      updateProductDescription(ulid, input as ProductDescriptionInput),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
     },
@@ -133,7 +134,8 @@ export function useUpsertProductDescription(ulid: string) {
 export function useUpsertProductSeo(ulid: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ProductSeoInput) => updateProductSeo(ulid, input),
+    mutationFn: (input: ProductSeoInput | Record<string, unknown>) =>
+      updateProductSeo(ulid, input as ProductSeoInput),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
     },
@@ -279,6 +281,70 @@ export function useUpdateProductVisibility(ulid: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: ProductVisibilityInput) => updateProductVisibility(ulid, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+// Compatibility hooks used by the older admin product sections.
+export function useProductAssets(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.assets ?? [] }
+}
+
+export function useProductFaqs(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.faqs ?? [] }
+}
+
+export function useProductTestimonials(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.testimonials ?? [] }
+}
+
+export function useProductDescription(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.description ?? null }
+}
+
+export function useProductSeo(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.seo_meta ?? null }
+}
+
+export function useProductDelivery(ulid: string) {
+  const query = useProductQuery(ulid)
+  return { ...query, data: query.data?.delivery_config ?? null }
+}
+
+export function useAddProductAsset(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: Record<string, unknown>) =>
+      createProductAsset(ulid, input as unknown as ProductAssetInput),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useAddProductFaq(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: Record<string, unknown>) =>
+      createProductFaq(ulid, input as unknown as ProductFaqInput),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
+    },
+  })
+}
+
+export function useAddProductTestimonial(ulid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: Record<string, unknown>) =>
+      createProductTestimonial(ulid, input as unknown as ProductTestimonialInput),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: productKeys.detail(ulid) })
     },
