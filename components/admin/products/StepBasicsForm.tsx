@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
@@ -73,11 +73,43 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
     setValue,
     watch,
     setError,
+    reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<CreateProductInput>({
     resolver: zodResolver(CreateProductSchema),
     defaultValues,
   })
+
+  useEffect(() => {
+    if (product) {
+      reset({
+        internal_name: product.internal_name ?? '',
+        type: product.type?.id ?? 1,
+        delivery_method: product.delivery_method?.id ?? 1,
+        base_price: Number(product.base_price),
+        sale_price: product.sale_price !== null && product.sale_price !== undefined ? Number(product.sale_price) : null,
+        currency: product.currency ?? 'EGP',
+        vat_rule: product.vat_rule?.id ?? 1,
+        sku: product.sku ?? '',
+        translations: {
+          ar: {
+            name: product.name ?? '',
+            one_liner: product.one_liner ?? '',
+          },
+          en: {
+            name: '',
+            one_liner: '',
+          },
+        },
+        download_limit: product.download_limit ?? null,
+        access_expiry_days: product.access_expiry_days ?? null,
+        coupon_eligible: product.coupon_eligible ?? true,
+        crm_score_on_purchase: product.crm_score_on_purchase ?? null,
+        sort_order: product.sort_order ?? 0,
+        featured: product.featured ?? false,
+      })
+    }
+  }, [product, reset])
 
   const currentType = watch('type')
   const currentDelivery = watch('delivery_method')

@@ -72,6 +72,13 @@ function optionLabel(options: readonly (readonly [string, string])[], id: number
   return option ? option[locale === 'ar' ? 1 : 0] : '—'
 }
 
+function apiErrorMessage(result: { message?: string; errors?: Record<string, string[]> | null }, fallback: string) {
+  const fieldErrors = result.errors
+    ? Object.values(result.errors).flat().filter(Boolean).join(' ')
+    : ''
+  return fieldErrors || result.message || fallback
+}
+
 export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
   const t = useTranslations('seller.products.wizard')
   const locale = useLocale()
@@ -248,13 +255,14 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
       : await createSellerProduct(body)
     setSaving(false)
     if (!result.ok) {
-      setMessage(result.message)
+      setMessage(apiErrorMessage(result, t('genericError')))
+      return
+    }
+    if (!product) {
+      router.replace(`/${locale}/seller/products`)
       return
     }
     setProduct(result.data)
-    if (!product) {
-      router.replace(`/${locale}/seller/products/${result.data.ulid}`)
-    }
     setStep(1)
   }
 
@@ -525,7 +533,7 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
             <option value="2">{locale === 'ar' ? 'تضاف الضريبة' : 'VAT added'}</option>
             <option value="3">{locale === 'ar' ? 'معفى من الضريبة' : 'VAT exempt'}</option>
           </select>
-          <Button disabled={saving}>{saving ? t('saving') : t('saveContinue')}</Button>
+          <Button type="submit" disabled={saving}>{saving ? t('saving') : t('saveContinue')}</Button>
         </form>
       )}
 

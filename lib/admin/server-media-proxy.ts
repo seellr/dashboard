@@ -14,6 +14,31 @@ export interface ProxyContext {
 }
 
 /**
+ * Media resources return storage paths relative to the backend host. The
+ * dashboard runs on a different origin, so expose browser-safe absolute URLs
+ * without leaking the backend API key into client code.
+ */
+export function normalizeMediaUrls<T>(payload: T): T {
+  const backendOrigin = new URL(BACKEND_API_URL).origin
+  const visit = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(visit)
+    if (!value || typeof value !== 'object') return value
+
+    const output: Record<string, unknown> = {}
+    for (const [key, nested] of Object.entries(value)) {
+      if ((key === 'url' || key === 'thumb_url' || key === 'hero_image_url') && typeof nested === 'string' && nested.startsWith('/')) {
+        output[key] = `${backendOrigin}${nested}`
+      } else {
+        output[key] = visit(nested)
+      }
+    }
+    return output
+  }
+
+  return visit(payload) as T
+}
+
+/**
  * Validates admin authentication and extracts locale and brand headers.
  * Returns either the context or an unauthenticated 401 response.
  */

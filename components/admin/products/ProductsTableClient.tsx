@@ -115,7 +115,7 @@ export function ProductsTableClient({ locale }: { locale: string }) {
         p.sku?.toLowerCase().includes(q),
     )
   }, [items, search])
-
+  console.log(filteredItems)
   const handleLoadMore = () => {
     if (hasMore && nextCursor) {
       setCursor(nextCursor)

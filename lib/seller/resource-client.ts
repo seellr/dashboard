@@ -24,6 +24,7 @@ export interface SellerProduct {
   status?: EnumValue
   type?: EnumValue
   delivery_method?: EnumValue
+  vat_rule?: EnumValue
   base_price?: string | number | null
   sale_price?: string | number | null
   currency?: string | null
@@ -92,6 +93,7 @@ export interface SellerDomain {
 
 export interface SellerTheme {
   ulid: string
+  theme_ulid: string
   name?: string | null
   slug?: string | null
   preview_url?: string | null
