@@ -93,12 +93,34 @@ export interface SellerDomain {
 
 export interface SellerTheme {
   ulid: string
-  theme_ulid: string
+  theme_ulid?: string
   name?: string | null
   slug?: string | null
   preview_url?: string | null
   description?: string | null
   is_active?: boolean
+}
+
+export interface SellerThemeSetting {
+  key: string
+  type?: EnumValue
+  label?: string | null
+  value?: string | null
+  default_value?: string | null
+  options?: string | null | Array<{ value: string; label?: string | null }>
+  sort_order?: number | null
+}
+
+export interface SellerActiveTheme {
+  theme_ulid: string
+  theme_name: string | { ar: string; en: string }
+  activated_at?: string | null
+  settings?: SellerThemeSetting[] | Record<string, unknown> | null
+}
+
+export interface SellerThemeSettingInput {
+  key: string
+  value: string
 }
 
 export interface SellerPlan {
@@ -274,16 +296,19 @@ export async function getSellerTheme(ulid: string) {
   return sellerFetchClient<SellerTheme>(`/themes/${encodeURIComponent(ulid)}`)
 }
 export async function getActiveSellerTheme() {
-  return sellerFetchClient<SellerTheme | null>('/theme')
+  return sellerFetchClient<SellerActiveTheme | null>('/theme')
 }
 export async function activateSellerTheme(theme_ulid: string) {
-  return sellerFetchClient<SellerTheme>('/theme/activate', {
+  return sellerFetchClient<SellerActiveTheme>('/theme/activate', {
     method: 'POST',
     body: JSON.stringify({ theme_ulid }),
   })
 }
-export async function updateSellerThemeSettings(settings: Record<string, unknown>) {
-  return sellerFetchClient<unknown>('/theme/settings', { method: 'PUT', body: JSON.stringify({ settings }) })
+export async function updateSellerThemeSettings(settings: SellerThemeSettingInput[]) {
+  return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ settings }),
+  })
 }
 export async function getSellerTenant() {
   return sellerFetchClient<unknown>('/tenant')

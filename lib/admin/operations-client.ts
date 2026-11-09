@@ -2,18 +2,66 @@
 
 import { adminFetchClient } from './api-client'
 
+export type BrandConfigInput = {
+  logo?: File | null
+  favicon?: File | null
+  primary_color?: string
+  secondary_color?: string
+  bg_color?: string
+  text_color?: string
+  font_heading?: string
+  font_body?: string
+  currency?: string
+  store_email?: string | null
+  store_phone?: string | null
+  store_address?: string | null
+  country_code?: string | null
+  timezone?: string
+  instagram_url?: string | null
+  facebook_url?: string | null
+  twitter_url?: string | null
+  youtube_url?: string | null
+  tiktok_url?: string | null
+  snapchat_url?: string | null
+  linkedin_url?: string | null
+  whatsapp_number?: string | null
+  google_analytics_id?: string | null
+  facebook_pixel_id?: string | null
+}
+
+function brandConfigForm(body: BrandConfigInput | FormData): FormData {
+  if (typeof FormData !== 'undefined' && body instanceof FormData) return body
+  const form = new FormData()
+  for (const [key, value] of Object.entries(body)) {
+    if (value === undefined || value === null) continue
+    if (value instanceof File) {
+      form.append(key, value)
+    } else {
+      form.append(key, String(value))
+    }
+  }
+  return form
+}
+
 /** Typed access to the remaining platform operations documented for admins. */
 export const adminOperationsApi = {
   listBrands: (query = '') => adminFetchClient<unknown[]>(`/brands${query}`),
   getBrand: (ulid: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}`),
   updateBrand: (ulid: string, body: unknown) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}`, { method: 'PUT', body: JSON.stringify(body) }),
   getBrandConfig: (ulid: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}/config`),
-  updateBrandConfig: (ulid: string, body: unknown) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}/config`, { method: 'POST', body: JSON.stringify(body) }),
+  updateBrandConfig: (ulid: string, body: BrandConfigInput | FormData) =>
+    adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}/config`, {
+      method: 'POST',
+      body: brandConfigForm(body),
+    }),
   getBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}`),
   getResolvedBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/resolved`),
+  exportBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/export`),
   importBrandLocale: (brandId: string | number, locale: string, body: unknown) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/import`, { method: 'POST', body: JSON.stringify(body) }),
   setBrandLocaleKey: (brandId: string | number, locale: string, key: string, body: unknown) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteBrandLocaleKey: (brandId: string | number, locale: string, key: string) => adminFetchClient<null>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/${encodeURIComponent(key)}`, { method: 'DELETE' }),
+  getLocaleDefaults: (locale: string) => adminFetchClient<unknown>(`/locale/defaults/${encodeURIComponent(locale)}`),
+  listDomains: (query = '') => adminFetchClient<unknown[]>(`/domains${query}`),
   listTenants: (query = '') => adminFetchClient<unknown[]>(`/tenants${query}`),
   getTenant: (ulid: string) => adminFetchClient<unknown>(`/tenants/${encodeURIComponent(ulid)}`),
   provisionTenant: (subscriberUlid: string, body: unknown = {}) => adminFetchClient<unknown>(`/tenants/${encodeURIComponent(subscriberUlid)}/provision`, { method: 'POST', body: JSON.stringify(body) }),

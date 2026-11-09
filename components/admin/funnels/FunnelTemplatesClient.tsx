@@ -143,7 +143,7 @@ export function FunnelTemplatesClient({ locale }: { locale: string }) {
   const { data: templates = [], isLoading } = useQuery<FunnelTemplate[]>({
     queryKey: ['admin', 'funnel-templates'],
     queryFn: async () => {
-      const res = await adminFetchClient<FunnelTemplate[]>(`/funnel-templates?brand_id=${activeBrand.id}`)
+      const res = await adminFetchClient<FunnelTemplate[]>('/funnel-templates')
       return res.ok ? res.data : []
     },
   })

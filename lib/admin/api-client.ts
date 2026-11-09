@@ -13,12 +13,14 @@ export async function adminFetchClient<T>(path: string, init?: RequestInit): Pro
     const brandId = typeof window !== 'undefined'
       ? (localStorage.getItem('admin_active_brand_id') ?? '1')
       : '1'
+    const isFormData =
+      typeof FormData !== 'undefined' && init?.body instanceof FormData
 
     const res = await fetch(`/api/admin${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         'x-locale': locale,
         'x-brand-id': brandId,
         ...(init?.headers as Record<string, string> | undefined),

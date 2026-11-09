@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { SellerThemeClient } from '@/components/seller/store/SellerThemeClient'
+import { SellerThemeSettingsClient } from '@/components/seller/store/SellerThemeSettingsClient'
 
 export default async function SellerThemePage({
   params,
@@ -26,10 +27,11 @@ export default async function SellerThemePage({
             className={buttonVariants()}
             href={`/${locale}/seller/theme-builder/editor`}
           >
-            Open builder
+            {t('pageBuilder')}
           </Link>
         </div>
       </div>
+      <SellerThemeSettingsClient />
       <SellerThemeClient />
     </div>
   )
