@@ -6,12 +6,21 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Package, Plus } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
   deleteSellerProduct,
   listSellerProducts,
   updateSellerProduct,
   type SellerProduct,
 } from '@/lib/seller/resource-client'
 
+// Documented ProductType enum: 1..9.
 const PRODUCT_TYPES = [
   'Ebook',
   'Template',
@@ -22,10 +31,6 @@ const PRODUCT_TYPES = [
   'Course',
   'AI Tool',
   'Quiz',
-  'Audio',
-  'Membership',
-  'Challenge',
-  'Consultation',
 ]
 
 const PRODUCT_STATUSES = ['Draft', 'Published', 'Archived', 'Coming Soon', 'Waitlist']
@@ -138,7 +143,7 @@ export function SellerProductsClient() {
         </p>
       )}
 
-      <div className="divide-y rounded-lg border">
+      <div className="rounded-lg border">
         {loading && items.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">
             {t('loading')}
@@ -149,56 +154,42 @@ export function SellerProductsClient() {
             <p className="text-sm text-muted-foreground">{t('empty')}</p>
           </div>
         ) : (
-          items.map((item) => {
-            const statusId = enumId(item.status)
-            return (
-              <div
-                key={item.ulid}
-                className="flex flex-wrap items-center justify-between gap-3 p-4"
-              >
-                <Link
-                  href={`/${locale}/seller/products/${item.ulid}`}
-                  className="min-w-0 flex-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <p className="truncate font-medium">
-                    {item.name ?? item.internal_name ?? item.ulid}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {label(item.status, PRODUCT_STATUSES)} ·{' '}
-                    {label(item.type, PRODUCT_TYPES)} · {item.base_price ?? '0'}{' '}
-                    {item.currency ?? ''}
-                  </p>
-                </Link>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy === item.ulid}
-                    onClick={() =>
-                      void run(item.ulid, () =>
-                        updateSellerProduct(item.ulid, {
-                          status: statusId === 2 ? 1 : 2,
-                        }),
-                      )
-                    }
-                  >
-                    {statusId === 2 ? t('archive') : t('publish')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={busy === item.ulid}
-                    onClick={() => {
-                      if (!window.confirm(t('confirmDelete'))) return
-                      void run(item.ulid, () => deleteSellerProduct(item.ulid))
-                    }}
-                  >
-                    {t('delete')}
-                  </Button>
-                </div>
-              </div>
-            )
-          })
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('table.name')}</TableHead>
+                <TableHead>{t('table.type')}</TableHead>
+                <TableHead>{t('table.status')}</TableHead>
+                <TableHead>{t('table.price')}</TableHead>
+                <TableHead>{t('table.vat')}</TableHead>
+                <TableHead>{t('table.delivery')}</TableHead>
+                <TableHead>{t('table.featured')}</TableHead>
+                <TableHead className="text-end">{t('table.actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => {
+                const statusId = enumId(item.status)
+                return (
+                  <TableRow key={item.ulid}>
+                    <TableCell>
+                      <Link href={`/${locale}/seller/products/${item.ulid}`} className="font-medium hover:underline">
+                        {item.name ?? item.internal_name ?? item.ulid}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">{item.slug ?? item.internal_name ?? item.ulid}</p>
+                    </TableCell>
+                    <TableCell>{label(item.type, PRODUCT_TYPES)}</TableCell>
+                    <TableCell>{label(item.status, PRODUCT_STATUSES)}</TableCell>
+                    <TableCell>{item.base_price ?? '0'} {item.currency ?? ''}{item.sale_price != null && <p className="text-xs text-muted-foreground">{t('table.sale')}: {item.sale_price} {item.currency ?? ''}</p>}</TableCell>
+                    <TableCell>{label(item.vat_rule, ['VAT included', 'VAT added', 'VAT exempt'])}</TableCell>
+                    <TableCell>{label(item.delivery_method, ['File download', 'External link', 'Notion link', 'Interactive', 'Discord', 'Telegram', 'Calendly', 'Physical'])}</TableCell>
+                    <TableCell>{item.featured ? t('table.yes') : t('table.no')}</TableCell>
+                    <TableCell><div className="flex justify-end gap-2"><Button size="sm" variant="outline" disabled={busy === item.ulid} onClick={() => void run(item.ulid, () => updateSellerProduct(item.ulid, { status: statusId === 2 ? 1 : 2 }))}>{statusId === 2 ? t('archive') : t('publish')}</Button><Button size="sm" variant="destructive" disabled={busy === item.ulid} onClick={() => { if (window.confirm(t('confirmDelete'))) void run(item.ulid, () => deleteSellerProduct(item.ulid)) }}>{t('delete')}</Button></div></TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
         )}
       </div>
 

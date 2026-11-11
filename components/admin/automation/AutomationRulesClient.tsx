@@ -115,8 +115,11 @@ export function AutomationRulesClient({ locale, initialRules }: Props) {
   })
 
   const toggleMutation = useMutation({
-    mutationFn: (ulid: string) =>
-      adminFetchClient(`/automation-rules/${ulid}/toggle`, { method: 'PATCH' }),
+    mutationFn: (rule: AutomationRule) =>
+      adminFetchClient(`/automation-rules/${rule.ulid}/toggle`, {
+        method: 'PATCH',
+        body: JSON.stringify({ active: !rule.active }),
+      }),
     onSuccess: () => router.refresh(),
   })
 
@@ -153,7 +156,7 @@ export function AutomationRulesClient({ locale, initialRules }: Props) {
                   <Badge
                     variant={rule.active ? 'new' : 'outline'}
                     className="cursor-pointer"
-                    onClick={() => toggleMutation.mutate(rule.ulid)}
+                    onClick={() => toggleMutation.mutate(rule)}
                   >
                     {rule.active ? 'Active' : 'Inactive'}
                   </Badge>

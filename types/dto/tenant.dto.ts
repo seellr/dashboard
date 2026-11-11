@@ -1,9 +1,11 @@
 import { z } from 'zod'
 
+// Documented tenant status ids: 1=Provisioning, 2=Active, 3=Suspended.
+// `Failed` is the remaining state used by the tenant lifecycle.
 export const TENANT_STATUS = {
-  Active: 1,
-  Suspended: 2,
-  Provisioning: 3,
+  Provisioning: 1,
+  Active: 2,
+  Suspended: 3,
   Failed: 4,
 } as const
 
@@ -35,6 +37,11 @@ export const TenantSchema = z.preprocess(
   z.object({
     ulid: z.string(),
     status: TenantStatusSchema,
+    subscriber_id: z.number().nullish(),
+    db_name: z.string().nullish(),
+    provision_error: z.string().nullish(),
+    provisioned_at: z.string().nullish(),
+    suspended_at: z.string().nullish(),
     name: z.string().nullish(),
     domain: z.string().nullish(),
     created_at: z.string().nullish(),

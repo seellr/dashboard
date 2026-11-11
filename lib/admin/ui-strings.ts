@@ -1,5 +1,7 @@
 export type UiStringScope = 'brand' | 'theme'
 
+export type UiStringId = string | number
+
 export const UI_STRING_LOCALES = ['ar', 'en'] as const
 export type UiStringLocale = (typeof UI_STRING_LOCALES)[number]
 
@@ -9,27 +11,27 @@ export function uiStringScopePlural(scope: UiStringScope): 'brands' | 'themes' {
   return scope === 'brand' ? 'brands' : 'themes'
 }
 
-function uiStringBase(scope: UiStringScope, id: number, locale: UiStringLocale): string {
-  return `/${uiStringScopePlural(scope)}/${id}/locale/${locale}`
+function uiStringBase(scope: UiStringScope, id: UiStringId, locale: UiStringLocale): string {
+  return `/${uiStringScopePlural(scope)}/${encodeURIComponent(String(id))}/locale/${locale}`
 }
 
-export function uiStringResolvedPath(scope: UiStringScope, id: number, locale: UiStringLocale): string {
+export function uiStringResolvedPath(scope: UiStringScope, id: UiStringId, locale: UiStringLocale): string {
   return `${uiStringBase(scope, id, locale)}/resolved`
 }
 
-export function uiStringOverridesPath(scope: UiStringScope, id: number, locale: UiStringLocale): string {
+export function uiStringOverridesPath(scope: UiStringScope, id: UiStringId, locale: UiStringLocale): string {
   return `${uiStringBase(scope, id, locale)}/`
 }
 
-export function uiStringKeyPath(scope: UiStringScope, id: number, locale: UiStringLocale, key: string): string {
+export function uiStringKeyPath(scope: UiStringScope, id: UiStringId, locale: UiStringLocale, key: string): string {
   return `${uiStringBase(scope, id, locale)}/${encodeURIComponent(key)}`
 }
 
-export function uiStringExportPath(scope: UiStringScope, id: number, locale: UiStringLocale): string {
+export function uiStringExportPath(scope: UiStringScope, id: UiStringId, locale: UiStringLocale): string {
   return `${uiStringBase(scope, id, locale)}/export`
 }
 
-export function uiStringImportPath(scope: UiStringScope, id: number, locale: UiStringLocale): string {
+export function uiStringImportPath(scope: UiStringScope, id: UiStringId, locale: UiStringLocale): string {
   return `${uiStringBase(scope, id, locale)}/import`
 }
 

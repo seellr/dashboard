@@ -71,11 +71,10 @@ export async function forwardSubscriberRequest(
     }
 
     const target = `${BACKEND_API_URL}${resolved.target}${request.nextUrl.search}`
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[subscriber-proxy] ${request.method} ${target}`)
-    }
+    const logProxy = process.env.NODE_ENV !== 'production'
 
     const upstream = await fetch(target, { method: request.method, headers, body, cache: 'no-store', redirect: 'manual' })
+    if (logProxy) console.log(`[subscriber-proxy] ${request.method} ${target} -> ${upstream.status}`)
 
     if (upstream.status >= 300 && upstream.status < 400) {
       const location = upstream.headers.get('location')

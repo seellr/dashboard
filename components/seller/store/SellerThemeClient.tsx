@@ -9,13 +9,14 @@ import {
   activateSellerTheme,
   getActiveSellerTheme,
   listSellerThemes,
+  type SellerActiveTheme,
   type SellerTheme,
 } from '@/lib/seller/resource-client'
 
 export function SellerThemeClient() {
   const t = useTranslations('seller.theme')
   const [items, setItems] = useState<SellerTheme[]>([])
-  const [active, setActive] = useState<SellerTheme | null>(null)
+  const [active, setActive] = useState<SellerActiveTheme | null>(null)
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -67,7 +68,7 @@ export function SellerThemeClient() {
     setMessage(t('activated'))
   }
 
-  const activeUlid = active?.ulid ?? items.find((item) => item.is_active)?.ulid
+  const activeUlid = active?.theme?.ulid ?? active?.theme_ulid ?? items.find((item) => item.is_active)?.ulid
 
   return (
     <section className="space-y-4">

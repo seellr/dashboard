@@ -2,6 +2,7 @@
 
 import { sellerFetchClient } from '@/lib/seller/api-client'
 import type { ApiResult } from '@/lib/shared/api-result'
+import type { ThemeSchema } from '@/shared/types/builder'
 
 export interface CursorMeta {
   per_page?: number
@@ -24,11 +25,21 @@ export interface SellerProduct {
   status?: EnumValue
   type?: EnumValue
   delivery_method?: EnumValue
+  vat_rule?: EnumValue
   base_price?: string | number | null
   sale_price?: string | number | null
   currency?: string | null
   hero_image_url?: string | null
+  sku?: string | null
   featured?: boolean
+  coupon_eligible?: boolean
+  crm_score_on_purchase?: number | null
+  sort_order?: number | null
+  download_limit?: number | null
+  access_expiry_days?: number | null
+  track_stock?: boolean
+  stock_quantity?: number | null
+  allow_backorder?: boolean
   created_at?: string | null
   updated_at?: string | null
   description?: unknown
@@ -92,11 +103,46 @@ export interface SellerDomain {
 
 export interface SellerTheme {
   ulid: string
+  theme_ulid?: string
   name?: string | null
   slug?: string | null
   preview_url?: string | null
   description?: string | null
   is_active?: boolean
+}
+
+export interface SellerThemeSetting {
+  key: string
+  type?: EnumValue
+  label?: string | null
+  value?: unknown
+  default_value?: unknown
+  options?: string | null | Array<{ value: string; label?: string | null }>
+  sort_order?: number | null
+}
+
+export interface SellerThemeDescriptor {
+  ulid: string
+  handle: string
+  version?: string | null
+  name: string
+}
+
+export interface SellerActiveTheme {
+  /** Live `GET /subscriber/theme` shape. */
+  theme?: SellerThemeDescriptor
+  has_unpublished_changes?: boolean
+  published_at?: string | null
+  /** Documented/legacy shape. */
+  theme_ulid?: string
+  theme_name?: string | { ar: string; en: string }
+  activated_at?: string | null
+  settings?: SellerThemeSetting[] | Record<string, unknown> | null
+}
+
+export interface SellerThemeSettingInput {
+  key: string
+  value: string
 }
 
 export interface SellerPlan {
@@ -105,6 +151,8 @@ export interface SellerPlan {
   name?: string | { ar: string; en: string } | null
   description?: string | { ar: string; en: string } | null
   price?: string | number | null
+  price_monthly?: string | number | null
+  price_annual?: string | number | null
   monthly_price?: string | number | null
   annual_price?: string | number | null
   currency?: string | null
@@ -272,16 +320,22 @@ export async function getSellerTheme(ulid: string) {
   return sellerFetchClient<SellerTheme>(`/themes/${encodeURIComponent(ulid)}`)
 }
 export async function getActiveSellerTheme() {
-  return sellerFetchClient<SellerTheme | null>('/theme')
+  return sellerFetchClient<SellerActiveTheme | null>('/theme')
+}
+export async function getSellerThemeSchema() {
+  return sellerFetchClient<ThemeSchema>('/theme/schema')
 }
 export async function activateSellerTheme(theme_ulid: string) {
-  return sellerFetchClient<SellerTheme>('/theme/activate', {
+  return sellerFetchClient<SellerActiveTheme>('/theme/activate', {
     method: 'POST',
     body: JSON.stringify({ theme_ulid }),
   })
 }
-export async function updateSellerThemeSettings(settings: Record<string, unknown>) {
-  return sellerFetchClient<unknown>('/theme/settings', { method: 'PUT', body: JSON.stringify({ settings }) })
+export async function updateSellerThemeSettings(settings: SellerThemeSettingInput[]) {
+  return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ settings }),
+  })
 }
 export async function getSellerTenant() {
   return sellerFetchClient<unknown>('/tenant')

@@ -44,9 +44,9 @@ export function useCrmEventsQuery(ulid: string) {
 export function useUpdateBuyerTypeMutation(ulid: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (buyer_type_id: number) => {
+    mutationFn: async (buyer_type: number) => {
       const result = await adminFetchClient(`/crm/customers/${ulid}/buyer-type`, {
-        method: 'PUT', body: JSON.stringify({ buyer_type_id }),
+        method: 'PUT', body: JSON.stringify({ buyer_type }),
       })
       if (!result.ok) throw new Error((result as { message: string }).message)
       return result.data

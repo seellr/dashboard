@@ -13,6 +13,8 @@ export const PlanSchema = z.object({
   name: NameSchema,
   description: z.union([z.string(), LocalizedTextSchema]).nullish(),
   price: z.union([z.string(), z.number()]).nullish(),
+  price_monthly: z.union([z.string(), z.number()]).nullish(),
+  price_annual: z.union([z.string(), z.number()]).nullish(),
   monthly_price: z.union([z.string(), z.number()]).nullish(),
   annual_price: z.union([z.string(), z.number()]).nullish(),
   currency: z.string().nullish(),

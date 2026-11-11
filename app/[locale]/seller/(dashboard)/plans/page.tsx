@@ -87,7 +87,7 @@ export default async function SellerPlansPage({
               </div>
 
               <p className="text-2xl font-semibold">
-                {plan.monthly_price ?? plan.price ?? '—'}{' '}
+                {plan.price_monthly ?? plan.monthly_price ?? plan.price ?? '—'}{' '}
                 <span className="text-sm font-normal text-muted-foreground">
                   {plan.currency ?? ''}
                 </span>

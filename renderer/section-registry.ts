@@ -24,6 +24,8 @@ export interface SectionComponentProps { section: SectionInstance; locale: Local
 export const sectionRegistry: Record<string, ComponentType<SectionComponentProps>> = {
   hero: HeroSection,
   product_grid: ProductGridSection,
+  product_details: ProductDetailSection,
+  product_catalog: ProductGridSection,
   faq: FaqSection,
   rich_text: RichTextSection,
   image_text: ImageTextSection,

@@ -8,7 +8,7 @@ export function useFunnelTemplatesQuery() {
   return useQuery({
     queryKey: funnelTemplatesQueryKey(),
     queryFn: async () => {
-      const result = await adminFetchClient<FunnelTemplate[]>('/funnel-templates?brand_id=1')
+      const result = await adminFetchClient<FunnelTemplate[]>('/funnel-templates')
       if (!result.ok) throw new Error(result.message)
       return result.data
     },

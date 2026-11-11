@@ -19,12 +19,22 @@
     "vat": "VAT",
     "media": "Media Library",
     "localization": "Localization",
+    "shipping": "Shipping",
+    "delivery": "Delivery Access",
+    "tenants": "Tenants",
+    "platform": "Platform Overview",
+    "plans": "Plans",
+    "domains": "Domains",
+    "admins": "Admins & Roles",
+    "logs": "Audit Logs",
     "group": {
       "store": "Store",
       "growth": "Growth",
       "funnels": "Funnels & Email",
       "tools": "Tools",
-      "content": "Content"
+      "content": "Content",
+      "operations": "Operations",
+      "platform": "Platform"
     }
   },
   "tab": {
@@ -89,6 +99,9 @@
       "vatRule": "VAT rule",
       "couponEligible": "Coupon eligible",
       "featured": "Featured",
+      "trackStock": "Track stock",
+      "stockQuantity": "Stock quantity",
+      "allowBackorder": "Allow backorder",
       "save": "Save",
       "saveSuccess": "Product saved",
       "saveError": "Could not save product",
@@ -296,6 +309,8 @@
     "options": "Options",
     "removeSetting": "Remove setting",
     "settingsCount": "{count} settings",
+    "noManifest": "No manifest",
+    "editLimited": "Only the preview URL can be updated for an existing theme. Slug, translations and settings are set when the theme is created.",
     "settingTypes": { "1": "Color", "2": "Font", "3": "Toggle", "4": "Select", "5": "Text" },
     "edit": "Edit",
     "archive": "Archive",
@@ -324,10 +339,13 @@
     "discardConfirmDescription": "This will restore the last saved draft and cannot be undone.",
     "publishError": "The operation could not be completed. Please try again.",
     "stringsTitle": "Theme UI strings",
-    "stringsDescription": "Manage Arabic and English overrides for the active theme.",
+    "stringsDescription": "Manage Arabic and English overrides for a theme.",
     "stringsCount": "{count} strings",
     "stringsEmpty": "No overrides found.",
     "stringsError": "Unable to load theme strings.",
+    "selectTheme": "Theme",
+    "noThemes": "No themes available.",
+    "deleteStringConfirm": "Delete the override for {key}?",
     "importStrings": "Import JSON",
     "importConfirmTitle": "Replace all overrides?",
     "importConfirmDescription": "This will replace every override for this locale with {count} imported strings.",
@@ -400,5 +418,22 @@
       "uploadFailed": "Upload failed",
       "invalidFolder": "Folder name contains invalid characters."
     }
+  },
+  "admin": {
+    "createAdmin": "Create admin",
+    "editAdmin": "Edit admin",
+    "fillFormToCreateAdmin": "Fill form to create admin",
+    "fillFormToEditAdmin": "Fill form to edit admin"
+  },
+  "plan": {
+    "createPlan": "Create plan",
+    "editPlan": "Edit plan",
+    "fillFormToCreatePlan": "Fill form to create plan",
+    "fillFormToEditPlan": "Fill form to edit plan"
+  },
+  "tenant": {
+    "provision": "Provision tenant",
+    "noSubscribers": "No subscribers found",
+    "selectSubscriber": "Select subscriber"
   }
 }

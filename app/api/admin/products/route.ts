@@ -3,6 +3,7 @@ import { BACKEND_API_URL, backendHeaders } from '@/lib/admin/backend-client'
 import {
   authenticateAdminRequest,
   forwardToBackend,
+  normalizeMediaUrls,
   validationErrorResponse,
 } from '@/lib/admin/server-media-proxy'
 import {
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           { status: 502 },
         )
       }
+      return NextResponse.json(normalizeMediaUrls(data), { status: response.status })
     } catch (e) {
       console.error('[Products GET] Parse validation error:', e)
     }

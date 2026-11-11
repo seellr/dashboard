@@ -3,6 +3,7 @@ import { BACKEND_API_URL, backendHeaders } from '@/lib/admin/backend-client'
 import {
   authenticateAdminRequest,
   forwardToBackend,
+  normalizeMediaUrls,
   validationErrorResponse,
 } from '@/lib/admin/server-media-proxy'
 import { UpdateProductSchema } from '@/types/dto/product.dto'
@@ -25,11 +26,23 @@ export async function GET(
 
   const targetUrl = `${BACKEND_API_URL}/admin/products/${encodeURIComponent(ulid)}`
 
-  return forwardToBackend(targetUrl, {
+  const response = await forwardToBackend(targetUrl, {
     method: 'GET',
     headers: backendHeaders(locale, token, brandId),
     cache: 'no-store',
   })
+
+  if (response.ok) {
+    try {
+      const clone = response.clone()
+      const data = await clone.json()
+      return NextResponse.json(normalizeMediaUrls(data), { status: response.status })
+    } catch {
+      // If parsing fails, return the original response as-is
+    }
+  }
+
+  return response
 }
 
 export async function PUT(
