@@ -2,6 +2,7 @@
 
 import { sellerFetchClient } from '@/lib/seller/api-client'
 import type { ApiResult } from '@/lib/shared/api-result'
+import type { ThemeSchema } from '@/shared/types/builder'
 
 export interface CursorMeta {
   per_page?: number
@@ -29,7 +30,16 @@ export interface SellerProduct {
   sale_price?: string | number | null
   currency?: string | null
   hero_image_url?: string | null
+  sku?: string | null
   featured?: boolean
+  coupon_eligible?: boolean
+  crm_score_on_purchase?: number | null
+  sort_order?: number | null
+  download_limit?: number | null
+  access_expiry_days?: number | null
+  track_stock?: boolean
+  stock_quantity?: number | null
+  allow_backorder?: boolean
   created_at?: string | null
   updated_at?: string | null
   description?: unknown
@@ -105,15 +115,27 @@ export interface SellerThemeSetting {
   key: string
   type?: EnumValue
   label?: string | null
-  value?: string | null
-  default_value?: string | null
+  value?: unknown
+  default_value?: unknown
   options?: string | null | Array<{ value: string; label?: string | null }>
   sort_order?: number | null
 }
 
+export interface SellerThemeDescriptor {
+  ulid: string
+  handle: string
+  version?: string | null
+  name: string
+}
+
 export interface SellerActiveTheme {
-  theme_ulid: string
-  theme_name: string | { ar: string; en: string }
+  /** Live `GET /subscriber/theme` shape. */
+  theme?: SellerThemeDescriptor
+  has_unpublished_changes?: boolean
+  published_at?: string | null
+  /** Documented/legacy shape. */
+  theme_ulid?: string
+  theme_name?: string | { ar: string; en: string }
   activated_at?: string | null
   settings?: SellerThemeSetting[] | Record<string, unknown> | null
 }
@@ -129,6 +151,8 @@ export interface SellerPlan {
   name?: string | { ar: string; en: string } | null
   description?: string | { ar: string; en: string } | null
   price?: string | number | null
+  price_monthly?: string | number | null
+  price_annual?: string | number | null
   monthly_price?: string | number | null
   annual_price?: string | number | null
   currency?: string | null
@@ -297,6 +321,9 @@ export async function getSellerTheme(ulid: string) {
 }
 export async function getActiveSellerTheme() {
   return sellerFetchClient<SellerActiveTheme | null>('/theme')
+}
+export async function getSellerThemeSchema() {
+  return sellerFetchClient<ThemeSchema>('/theme/schema')
 }
 export async function activateSellerTheme(theme_ulid: string) {
   return sellerFetchClient<SellerActiveTheme>('/theme/activate', {

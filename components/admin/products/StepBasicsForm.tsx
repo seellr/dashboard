@@ -65,6 +65,9 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
     crm_score_on_purchase: product?.crm_score_on_purchase ?? null,
     sort_order: product?.sort_order ?? 0,
     featured: product?.featured ?? false,
+    track_stock: product?.track_stock ?? false,
+    stock_quantity: product?.stock_quantity ?? null,
+    allow_backorder: product?.allow_backorder ?? false,
   }
 
   const {
@@ -107,6 +110,9 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
         crm_score_on_purchase: product.crm_score_on_purchase ?? null,
         sort_order: product.sort_order ?? 0,
         featured: product.featured ?? false,
+        track_stock: product.track_stock ?? false,
+        stock_quantity: product.stock_quantity ?? null,
+        allow_backorder: product.allow_backorder ?? false,
       })
     }
   }, [product, reset])
@@ -116,6 +122,8 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
   const currentVat = watch('vat_rule')
   const couponEligible = watch('coupon_eligible')
   const featured = watch('featured')
+  const trackStock = watch('track_stock')
+  const allowBackorder = watch('allow_backorder')
 
   const onSubmit = async (data: CreateProductInput) => {
     setServerError(null)
@@ -129,6 +137,10 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
       access_expiry_days: data.access_expiry_days ? Number(data.access_expiry_days) : null,
       crm_score_on_purchase: data.crm_score_on_purchase ? Number(data.crm_score_on_purchase) : null,
       sort_order: data.sort_order ? Number(data.sort_order) : 0,
+      stock_quantity:
+        data.track_stock && data.stock_quantity !== null && data.stock_quantity !== undefined
+          ? Number(data.stock_quantity)
+          : null,
       sku: data.sku?.trim() || undefined,
     }
 
@@ -489,6 +501,47 @@ export function StepBasicsForm({ product, onSuccess, onCancel }: StepBasicsFormP
                 id="featured"
                 checked={featured ?? false}
                 onCheckedChange={(val) => setValue('featured', val)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+              <Label htmlFor="track_stock" className="text-xs font-medium cursor-pointer">
+                {t('form.trackStock')}
+              </Label>
+              <Switch
+                id="track_stock"
+                checked={trackStock ?? false}
+                onCheckedChange={(val) => setValue('track_stock', val, { shouldValidate: true })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="stock_quantity" className="text-xs font-medium">
+                {t('form.stockQuantity')}
+              </Label>
+              <Input
+                id="stock_quantity"
+                type="number"
+                min="0"
+                step="1"
+                disabled={!trackStock}
+                {...register('stock_quantity', { valueAsNumber: true })}
+                placeholder={trackStock ? '0' : '—'}
+              />
+              {errors.stock_quantity && (
+                <p className="text-xs text-destructive">{errors.stock_quantity.message}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+              <Label htmlFor="allow_backorder" className="text-xs font-medium cursor-pointer">
+                {t('form.allowBackorder')}
+              </Label>
+              <Switch
+                id="allow_backorder"
+                checked={allowBackorder ?? false}
+                onCheckedChange={(val) => setValue('allow_backorder', val)}
+                disabled={!trackStock}
               />
             </div>
           </div>

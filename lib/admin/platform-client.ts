@@ -2,9 +2,31 @@
 
 import { adminFetchClient } from './api-client'
 
-export interface PlatformAdmin { ulid: string; name?: string | null; email?: string | null; status?: { id: number | string; label: string }; roles?: Array<{ id: number | string; name?: string; label?: string }> }
+export interface PlatformAdmin {
+  ulid: string
+  name?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  is_super_admin?: boolean
+  status?: number | { id: number | string; label: string }
+  roles?: string[] | Array<{ id: number | string; name?: string; label?: string }>
+}
 export interface PlatformSubscriber { ulid: string; name?: string | null; email?: string | null; status?: { id: number | string; label: string }; tenant?: unknown }
-export interface PlatformPlan { ulid: string; name?: string | null; slug?: string | null; price?: string | number | null; currency?: string | null; active?: boolean }
+export interface PlatformPlan {
+  ulid: string
+  name?: string | null
+  slug?: string | null
+  price?: string | number | null
+  price_monthly?: string | number | null
+  price_annual?: string | number | null
+  max_sites?: number | null
+  max_products?: number | null
+  trial_days?: number | null
+  currency?: string | null
+  active?: boolean
+  translations?: unknown
+}
 export interface ContentTranslation { key: string; value?: string | null; locale?: string; resource?: string }
 
 export const platformAdminApi = {

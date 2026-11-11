@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createSellerProduct, deleteSellerProduct, listSellerProducts, saveSellerProductDelivery, saveSellerProductDescription, saveSellerProductFunnel, saveSellerProductSeo, updateSellerProduct, type SellerProduct } from '@/lib/seller/resource-client'
 
-const types = ['Ebook', 'Template', 'Playbook', 'Notion System', 'Prompts Pack', 'Bundle', 'Course', 'AI Tool', 'Quiz', 'Audio', 'Membership', 'Challenge', 'Consultation']
+const types = ['Ebook', 'Template', 'Playbook', 'Notion System', 'Prompts Pack', 'Bundle', 'Course', 'AI Tool', 'Quiz']
 const statuses = ['Draft', 'Published', 'Archived', 'Coming Soon', 'Waitlist']
 
 function statusId(value: SellerProduct['status']): number { if (typeof value === 'number') return value; if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value); if (value && typeof value === 'object') return typeof value.id === 'string' ? Number(value.id) : value.id; return 1 }

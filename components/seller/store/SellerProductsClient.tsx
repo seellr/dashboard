@@ -20,6 +20,7 @@ import {
   type SellerProduct,
 } from '@/lib/seller/resource-client'
 
+// Documented ProductType enum: 1..9.
 const PRODUCT_TYPES = [
   'Ebook',
   'Template',
@@ -30,10 +31,6 @@ const PRODUCT_TYPES = [
   'Course',
   'AI Tool',
   'Quiz',
-  'Audio',
-  'Membership',
-  'Challenge',
-  'Consultation',
 ]
 
 const PRODUCT_STATUSES = ['Draft', 'Published', 'Archived', 'Coming Soon', 'Waitlist']

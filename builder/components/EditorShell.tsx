@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Redo2, Save, Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageSwitcher } from '@/builder/components/PageSwitcher'
@@ -21,20 +21,34 @@ export function EditorShell() {
   const locale = useEditorStore((state) => state.locale)
   const selectedSectionId = useEditorStore((state) => state.selectedSectionId)
   const dirty = useEditorStore((state) => state.dirty)
+  const pageFromServer = useEditorStore((state) => state.pageFromServer)
   const setLocale = useEditorStore((state) => state.setLocale)
   const selectSection = useEditorStore((state) => state.selectSection)
   const save = useEditorStore((state) => state.resetDirty)
   const hydrate = useEditorStore((state) => state.hydrate)
+  const setSchema = useEditorStore((state) => state.setSchema)
   const schemaQuery = useBuilderSchema(locale)
   const pagesQuery = useBuilderPages(locale)
   const firstPageId = pagesQuery.data?.[0]?.ulid
   const draftQuery = useBuilderDraft(locale, firstPageId)
-  useEffect(() => { if (schemaQuery.data && draftQuery.data) hydrate(draftQuery.data, schemaQuery.data) }, [draftQuery.data, hydrate, schemaQuery.data])
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (schemaQuery.data) setSchema(schemaQuery.data)
+  }, [schemaQuery.data, setSchema])
+  useEffect(() => {
+    if (initialized.current) return
+    if (schemaQuery.data && draftQuery.data) {
+      initialized.current = true
+      hydrate(draftQuery.data, schemaQuery.data)
+    }
+  }, [draftQuery.data, hydrate, schemaQuery.data])
   const saveDraft = useCallback(async (latestPage: typeof page) => { await subscriberThemeApi.saveDraft(locale, latestPage.ulid, latestPage); save() }, [locale, save])
-  const autoSave = useAutoSaveDraft({ page, dirty, save: saveDraft })
+  const autoSave = useAutoSaveDraft({ page, dirty, save: saveDraft, enabled: pageFromServer })
   useBeforeUnloadWarning(dirty)
   const [previewToken, setPreviewToken] = useState<string | null>(null)
   const handlePreviewMessage = useCallback((message: PreviewToEditorMessage) => { if (message.type === 'SECTION_CLICKED') selectSection(message.sectionId) }, [selectSection])
   const queryError = schemaQuery.error || pagesQuery.error || draftQuery.error
-  return <div className="flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-xl border bg-background"><header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div className="flex items-center gap-3"><PageSwitcher /><span className="text-xs text-muted-foreground">{autoSave.status === 'saving' ? 'Saving…' : autoSave.status === 'failed' ? 'Save failed' : dirty ? 'Unsaved changes' : autoSave.status === 'saved' ? 'Saved' : queryError ? 'Offline draft' : 'Saved'}</span></div><div className="flex flex-wrap items-center gap-1"><PublishControls flush={autoSave.flush} onPreviewToken={setPreviewToken} /><Button variant={locale === 'ar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('ar')}>AR</Button><Button variant={locale === 'en' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('en')}>EN</Button><Button variant="ghost" size="icon-sm" aria-label="Undo" onClick={() => useEditorStore.temporal.getState().undo()}><Undo2 /></Button><Button variant="ghost" size="icon-sm" aria-label="Redo" onClick={() => useEditorStore.temporal.getState().redo()}><Redo2 /></Button><Button size="sm" className="gap-2" disabled={!dirty || autoSave.status === 'saving'} onClick={() => void autoSave.flush()}><Save className="size-4" />{autoSave.status === 'failed' ? 'Retry' : 'Save'}</Button></div></header>{queryError && <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900">Server data is unavailable; your local editor remains active.</div>}<div className="flex min-h-0 flex-1"><SectionsPanel /><main className="min-w-0 flex-1 overflow-auto p-4"><PreviewFrame page={page} schema={schema} locale={locale} selectedSectionId={selectedSectionId} previewToken={previewToken} onMessage={handlePreviewMessage} /></main><SettingsPanel /></div><footer className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground"><span>Theme editor</span><span className="flex items-center gap-1"><ArrowLeft className="size-3" />Drag sections to reorder<ArrowRight className="size-3" /></span></footer></div>
+  const loadFailure = schemaQuery.error ? 'theme schema' : pagesQuery.error ? 'pages list' : draftQuery.error ? 'page draft' : null
+  const settled = !schemaQuery.isLoading && !pagesQuery.isLoading && !draftQuery.isLoading
+  return <div className="flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-xl border bg-background"><header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div className="flex items-center gap-3"><PageSwitcher /><span className="text-xs text-muted-foreground">{autoSave.status === 'saving' ? 'Saving…' : autoSave.status === 'failed' ? 'Save failed' : dirty ? 'Unsaved changes' : autoSave.status === 'saved' ? 'Saved' : queryError ? 'Offline draft' : !pageFromServer ? 'Sample layout (not saved)' : 'Saved'}</span></div><div className="flex flex-wrap items-center gap-1"><PublishControls flush={autoSave.flush} onPreviewToken={setPreviewToken} /><Button variant={locale === 'ar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('ar')}>AR</Button><Button variant={locale === 'en' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('en')}>EN</Button><Button variant="ghost" size="icon-sm" aria-label="Undo" onClick={() => useEditorStore.temporal.getState().undo()}><Undo2 /></Button><Button variant="ghost" size="icon-sm" aria-label="Redo" onClick={() => useEditorStore.temporal.getState().redo()}><Redo2 /></Button><Button size="sm" className="gap-2" disabled={!dirty || !pageFromServer || autoSave.status === 'saving'} onClick={() => void autoSave.flush()}><Save className="size-4" />{autoSave.status === 'failed' ? 'Retry' : 'Save'}</Button></div></header>{loadFailure && <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900">Could not load the {loadFailure} from the server; your local editor remains active. The rejected payload is logged in the browser console.</div>}{settled && !pageFromServer && <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900">No page was loaded from the server, so this is a sample layout and saving is disabled. Check that the active theme has pages and that <code>GET /subscriber/pages</code> returns them.</div>}<div className="flex min-h-0 flex-1"><SectionsPanel /><main className="min-w-0 flex-1 overflow-auto p-4"><PreviewFrame page={page} schema={schema} locale={locale} selectedSectionId={selectedSectionId} previewToken={previewToken} onMessage={handlePreviewMessage} /></main><SettingsPanel /></div><footer className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground"><span>Theme editor</span><span className="flex items-center gap-1"><ArrowLeft className="size-3" />Drag sections to reorder<ArrowRight className="size-3" /></span></footer></div>
 }

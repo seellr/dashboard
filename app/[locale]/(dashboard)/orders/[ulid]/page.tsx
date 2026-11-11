@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { adminFetchServer } from '@/lib/admin/api-server'
+import { OrderActionsClient } from '@/components/admin/orders/OrderActionsClient'
 import type { Order } from '@/types/dto/order.dto'
 
 export default async function OrderDetailPage({
@@ -31,7 +32,7 @@ export default async function OrderDetailPage({
   return (
     <div className="flex flex-col gap-6 max-w-xl">
       <div className="flex flex-col gap-2">
-        <Link href={`/${locale}/admin/orders`} className="text-sm text-muted-foreground underline underline-offset-2">
+        <Link href={`/${locale}/orders`} className="text-sm text-muted-foreground underline underline-offset-2">
           {t('detail.back')}
         </Link>
         <h1 className="text-xl font-semibold">{order.invoice_number ?? order.ulid}</h1>
@@ -45,6 +46,7 @@ export default async function OrderDetailPage({
           </div>
         ))}
       </dl>
+      <OrderActionsClient orderUlid={order.ulid} />
     </div>
   )
 }

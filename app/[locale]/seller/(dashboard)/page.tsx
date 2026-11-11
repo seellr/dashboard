@@ -86,16 +86,22 @@ export default async function SellerDashboardPage({
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">{t('storeName')}</span>
-              <span className="font-medium">{tenant?.name ?? '—'}</span>
+              <span className="text-muted-foreground">{t('storeTenant')}</span>
+              <span className="truncate font-mono text-xs font-medium">
+                {tenant?.ulid ?? '—'}
+              </span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">{t('storeStatus')}</span>
               <span className="font-medium">{tenant?.status.label ?? '—'}</span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">{t('storeDomain')}</span>
-              <span className="truncate font-medium">{tenant?.domain ?? '—'}</span>
+              <span className="text-muted-foreground">{t('storeProvisioned')}</span>
+              <span className="truncate font-medium">
+                {tenant?.provisioned_at
+                  ? new Date(tenant.provisioned_at).toLocaleDateString(locale)
+                  : '—'}
+              </span>
             </div>
           </CardContent>
         </Card>

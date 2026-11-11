@@ -8,6 +8,9 @@ export function settingString(settings: Record<string, SettingValue | LocalizedV
 
 export function settingText(settings: Record<string, SettingValue | LocalizedValue>, key: string, locale: Locale, fallback = ''): string {
   const value = settings[key]
-  if (typeof value === 'object' && value !== null && 'ar' in value && 'en' in value) return value[locale] || fallback
+  if (typeof value === 'object' && value !== null && 'ar' in value && 'en' in value) {
+    const localized = value as LocalizedValue
+    return localized[locale] || fallback
+  }
   return typeof value === 'string' ? value : fallback
 }

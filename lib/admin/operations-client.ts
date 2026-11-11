@@ -2,6 +2,49 @@
 
 import { adminFetchClient } from './api-client'
 
+export interface BrandConfigData {
+  logo_url?: string | null
+  favicon_url?: string | null
+  primary_color?: string | null
+  secondary_color?: string | null
+  bg_color?: string | null
+  text_color?: string | null
+  font_heading?: string | null
+  font_body?: string | null
+  currency?: string | null
+  store_email?: string | null
+  store_phone?: string | null
+  store_address?: string | null
+  country_code?: string | null
+  timezone?: string | null
+  instagram_url?: string | null
+  facebook_url?: string | null
+  twitter_url?: string | null
+  youtube_url?: string | null
+  tiktok_url?: string | null
+  snapchat_url?: string | null
+  linkedin_url?: string | null
+  whatsapp_number?: string | null
+  google_analytics_id?: string | null
+  facebook_pixel_id?: string | null
+}
+
+export interface BrandRecord {
+  ulid: string
+  name?: string | null
+  slug?: string | null
+  domain?: string | null
+  active?: boolean
+  config?: BrandConfigData | null
+}
+
+export interface BrandCoreInput {
+  name?: string
+  slug?: string
+  domain?: string | null
+  active?: boolean
+}
+
 export type BrandConfigInput = {
   logo?: File | null
   favicon?: File | null
@@ -45,15 +88,31 @@ function brandConfigForm(body: BrandConfigInput | FormData): FormData {
 
 /** Typed access to the remaining platform operations documented for admins. */
 export const adminOperationsApi = {
-  listBrands: (query = '') => adminFetchClient<unknown[]>(`/brands${query}`),
-  getBrand: (ulid: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}`),
-  updateBrand: (ulid: string, body: unknown) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}`, { method: 'PUT', body: JSON.stringify(body) }),
-  getBrandConfig: (ulid: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}/config`),
+  listBrands: (query = '') => adminFetchClient<BrandRecord[]>(`/brands${query}`),
+  getBrand: (ulid: string) => adminFetchClient<BrandRecord>(`/brands/${encodeURIComponent(ulid)}`),
+  updateBrand: (ulid: string, body: BrandCoreInput) => adminFetchClient<BrandRecord>(`/brands/${encodeURIComponent(ulid)}`, { method: 'PUT', body: JSON.stringify(body) }),
+  getBrandConfig: (ulid: string) => adminFetchClient<BrandConfigData>(`/brands/${encodeURIComponent(ulid)}/config`),
   updateBrandConfig: (ulid: string, body: BrandConfigInput | FormData) =>
-    adminFetchClient<unknown>(`/brands/${encodeURIComponent(ulid)}/config`, {
+    adminFetchClient<BrandConfigData>(`/brands/${encodeURIComponent(ulid)}/config`, {
       method: 'POST',
       body: brandConfigForm(body),
     }),
+  uploadBrandLogo: (ulid: string, file: File) => {
+    const form = new FormData()
+    form.append('logo', file)
+    return adminFetchClient<BrandConfigData>(`/brands/${encodeURIComponent(ulid)}/logo`, {
+      method: 'POST',
+      body: form,
+    })
+  },
+  uploadBrandFavicon: (ulid: string, file: File) => {
+    const form = new FormData()
+    form.append('favicon', file)
+    return adminFetchClient<BrandConfigData>(`/brands/${encodeURIComponent(ulid)}/favicon`, {
+      method: 'POST',
+      body: form,
+    })
+  },
   getBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}`),
   getResolvedBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/resolved`),
   exportBrandLocale: (brandId: string | number, locale: string) => adminFetchClient<unknown>(`/brands/${encodeURIComponent(String(brandId))}/locale/${encodeURIComponent(locale)}/export`),

@@ -1,6 +1,25 @@
 import { adminFetchClient } from './api-client'
 
+/**
+ * `type` is returned as a `{ id, label }` enum object by the API, while the
+ * documented create payload sends a `ThemeSettingTypeEnum` value (numeric in
+ * current deployments). Keep both shapes accepted.
+ */
+export type AdminThemeSettingType =
+  | number
+  | string
+  | { id: number | string; label?: string | null }
+
 export type AdminThemeSetting = {
+  ulid?: string
+  key: string
+  type: AdminThemeSettingType
+  default_value?: string | null
+  options?: string | null
+  sort_order?: number | null
+}
+
+export type AdminThemeSettingInput = {
   key: string
   type: number
   default_value?: string | null
@@ -9,6 +28,8 @@ export type AdminThemeSetting = {
 }
 
 export type AdminThemeTranslation = {
+  /** Required by `POST /admin/themes` per All.md. */
+  locale: string
   name: string
   description?: string | null
 }
@@ -22,15 +43,25 @@ export type AdminTheme = {
   name: string
   description?: string | null
   preview_url?: string | null
+  version?: string | null
+  has_manifest?: boolean
   settings?: AdminThemeSetting[] | null
   created_at: string
 }
 
-export type AdminThemePayload = {
+export type AdminThemeCreatePayload = {
   slug: string
   preview_url?: string | null
   translations: AdminThemeTranslation[]
-  settings?: AdminThemeSetting[] | null
+  settings?: AdminThemeSettingInput[] | null
+}
+
+/**
+ * All.md only documents `preview_url` for `PUT /admin/themes/{ulid}`.
+ * Slug, translations and settings are set at creation time.
+ */
+export type AdminThemeUpdatePayload = {
+  preview_url?: string | null
 }
 
 export type AdminThemeStrings = Record<string, string>
@@ -38,8 +69,13 @@ export type AdminThemeStrings = Record<string, string>
 export const adminThemeApi = {
   list: (query = '') => adminFetchClient<AdminTheme[]>(`/themes${query}`),
   get: (ulid: string) => adminFetchClient<AdminTheme>(`/themes/${encodeURIComponent(ulid)}`),
-  create: (body: AdminThemePayload) => adminFetchClient<AdminTheme>('/themes', { method: 'POST', body: JSON.stringify(body) }),
-  update: (ulid: string, body: Partial<AdminThemePayload>) => adminFetchClient<AdminTheme>(`/themes/${encodeURIComponent(ulid)}`, { method: 'PUT', body: JSON.stringify(body) }),
+  create: (body: AdminThemeCreatePayload) =>
+    adminFetchClient<AdminTheme>('/themes', { method: 'POST', body: JSON.stringify(body) }),
+  update: (ulid: string, body: AdminThemeUpdatePayload) =>
+    adminFetchClient<AdminTheme>(`/themes/${encodeURIComponent(ulid)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
   remove: (ulid: string) => adminFetchClient<null>(`/themes/${encodeURIComponent(ulid)}`, { method: 'DELETE' }),
   archive: (ulid: string) => adminFetchClient<AdminTheme>(`/themes/${encodeURIComponent(ulid)}/archive`, { method: 'POST' }),
   publish: (ulid: string) => adminFetchClient<AdminTheme>(`/themes/${encodeURIComponent(ulid)}/publish`, { method: 'POST' }),

@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   addSellerBundleItem,
+  addSellerProductAsset,
   addSellerProductFaq,
   addSellerProductTestimonial,
   deleteSellerBundleItem,
   deleteSellerProduct,
+  deleteSellerProductAsset,
   deleteSellerProductFaq,
   deleteSellerProductImage,
   deleteSellerProductTestimonial,
@@ -30,11 +32,11 @@ import {
   type SellerProduct,
 } from '@/lib/seller/resource-client'
 
+// Documented ProductType enum: 1..9. Do not add values the API does not accept.
 const PRODUCT_TYPES = [
   ['Ebook', 'كتاب إلكتروني'], ['Template', 'قالب'], ['Playbook', 'دليل عملي'],
   ['Notion System', 'نظام نوشن'], ['Prompts Pack', 'حزمة برومبتات'], ['Bundle', 'حزمة منتجات'],
-  ['Course', 'دورة'], ['AI Tool', 'أداة ذكاء اصطناعي'], ['Quiz', 'اختبار'], ['Audio', 'ملف صوتي'],
-  ['Membership', 'عضوية'], ['Challenge', 'تحدي'], ['Consultation', 'استشارة'],
+  ['Course', 'دورة'], ['AI Tool', 'أداة ذكاء اصطناعي'], ['Quiz', 'اختبار'],
 ] as const
 
 const DELIVERY_METHODS = [
@@ -99,6 +101,14 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
   const [salePrice, setSalePrice] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [vatRule, setVatRule] = useState('3')
+  const [sku, setSku] = useState('')
+  const [featured, setFeatured] = useState(false)
+  const [couponEligible, setCouponEligible] = useState(true)
+  const [crmScore, setCrmScore] = useState('')
+  const [sortOrder, setSortOrder] = useState('0')
+  const [trackStock, setTrackStock] = useState(false)
+  const [stockQuantity, setStockQuantity] = useState('')
+  const [allowBackorder, setAllowBackorder] = useState(false)
 
   const [oneLiner, setOneLiner] = useState('')
   const [audience, setAudience] = useState('')
@@ -120,6 +130,8 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
 
   const [metaTitle, setMetaTitle] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
+  const [assetName, setAssetName] = useState('')
+  const [assetUrl, setAssetUrl] = useState('')
   const [faqQuestion, setFaqQuestion] = useState('')
   const [faqAnswer, setFaqAnswer] = useState('')
   const [testimonialName, setTestimonialName] = useState('')
@@ -154,6 +166,14 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
     setBasePrice(String(item.base_price ?? 0))
     setSalePrice(item.sale_price === null || item.sale_price === undefined ? '' : String(item.sale_price))
     setCurrency(item.currency ?? 'USD')
+    setSku(item.sku ?? '')
+    setFeatured(item.featured === true)
+    setCouponEligible(item.coupon_eligible !== false)
+    setCrmScore(item.crm_score_on_purchase === null || item.crm_score_on_purchase === undefined ? '' : String(item.crm_score_on_purchase))
+    setSortOrder(item.sort_order === null || item.sort_order === undefined ? '0' : String(item.sort_order))
+    setTrackStock(item.track_stock === true)
+    setStockQuantity(item.stock_quantity === null || item.stock_quantity === undefined ? '' : String(item.stock_quantity))
+    setAllowBackorder(item.allow_backorder === true)
 
     const description = asRecord(item.description)
     setOneLiner(textAt(description, 'translations', 'ar', 'one_liner'))
@@ -172,8 +192,16 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
     setTelegramInvite(textAt(delivery, 'telegram_invite'))
     setCalendlyUrl(textAt(delivery, 'calendly_url'))
     setRequiresShipping(delivery.requires_shipping === true)
-    setDownloadLimit(delivery.download_limit ? String(delivery.download_limit) : '')
-    setAccessExpiry(delivery.access_expiry_days ? String(delivery.access_expiry_days) : '')
+    setDownloadLimit(
+      item.download_limit === null || item.download_limit === undefined
+        ? ''
+        : String(item.download_limit),
+    )
+    setAccessExpiry(
+      item.access_expiry_days === null || item.access_expiry_days === undefined
+        ? ''
+        : String(item.access_expiry_days),
+    )
 
     const seo = asRecord(item.seo_meta)
     setMetaTitle(textAt(seo, 'translations', 'ar', 'meta_title'))
@@ -245,6 +273,14 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
       sale_price: salePrice === '' ? null : Number(salePrice),
       currency: currency.toUpperCase(),
       vat_rule: Number(vatRule),
+      sku: sku.trim() || undefined,
+      featured,
+      coupon_eligible: couponEligible,
+      crm_score_on_purchase: crmScore === '' ? null : Number(crmScore),
+      sort_order: sortOrder === '' ? 0 : Number(sortOrder),
+      track_stock: trackStock,
+      stock_quantity: trackStock && stockQuantity !== '' ? Number(stockQuantity) : null,
+      allow_backorder: allowBackorder,
       translations: {
         ar: { name: nameAr.trim() || internalName.trim(), one_liner: oneLinerAr || null },
         en: { name: nameEn.trim() || internalName.trim(), one_liner: null },
@@ -332,8 +368,16 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
 
   const saveDelivery = async () => {
     if (!product) return
-    const ok = await withSave(() =>
-      saveSellerProductDelivery(product.ulid, {
+    const ok = await withSave(async () => {
+      // download_limit / access_expiry_days are top-level product fields, not
+      // part of the delivery config contract.
+      const updated = await updateSellerProduct(product.ulid, {
+        download_limit: downloadLimit ? Number(downloadLimit) : null,
+        access_expiry_days: accessExpiry ? Number(accessExpiry) : null,
+      })
+      if (!updated.ok) return updated
+
+      return saveSellerProductDelivery(product.ulid, {
         external_url: externalUrl || null,
         notion_url: notionUrl || null,
         discord_server_id: discordServer || null,
@@ -341,10 +385,8 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
         telegram_invite: telegramInvite || null,
         calendly_url: calendlyUrl || null,
         requires_shipping: requiresShipping,
-        download_limit: downloadLimit ? Number(downloadLimit) : null,
-        access_expiry_days: accessExpiry ? Number(accessExpiry) : null,
-      }),
-    )
+      })
+    })
     if (ok) {
       setStep(4)
       await reload()
@@ -364,6 +406,23 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
       }),
     )
     if (ok) await reload()
+  }
+
+  const addAsset = async () => {
+    if (!product || !assetName.trim() || !assetUrl.trim()) return
+    const ok = await withSave(() =>
+      addSellerProductAsset(product.ulid, {
+        name: assetName.trim(),
+        asset_type: 1,
+        url: assetUrl.trim(),
+        sort_order: (product.assets ?? []).length,
+      }),
+    )
+    if (ok) {
+      setAssetName('')
+      setAssetUrl('')
+      await reload()
+    }
   }
 
   const addFaq = async () => {
@@ -533,6 +592,18 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
             <option value="2">{locale === 'ar' ? 'تضاف الضريبة' : 'VAT added'}</option>
             <option value="3">{locale === 'ar' ? 'معفى من الضريبة' : 'VAT exempt'}</option>
           </select>
+          <Input value={sku} onChange={(event) => setSku(event.target.value)} placeholder={t('sku')} aria-label={t('sku')} maxLength={80} />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Input type="number" min="0" step="1" value={crmScore} onChange={(event) => setCrmScore(event.target.value)} placeholder={t('crmScore')} aria-label={t('crmScore')} />
+            <Input type="number" min="0" step="1" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} placeholder={t('sortOrder')} aria-label={t('sortOrder')} />
+            <Input type="number" min="0" step="1" value={stockQuantity} onChange={(event) => setStockQuantity(event.target.value)} placeholder={t('stockQuantity')} aria-label={t('stockQuantity')} disabled={!trackStock} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={couponEligible} onChange={(event) => setCouponEligible(event.target.checked)} />{t('couponEligible')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} />{t('featured')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={trackStock} onChange={(event) => { setTrackStock(event.target.checked); if (!event.target.checked) setStockQuantity('') }} />{t('trackStock')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={allowBackorder} onChange={(event) => setAllowBackorder(event.target.checked)} disabled={!trackStock} />{t('allowBackorder')}</label>
+          </div>
           <Button type="submit" disabled={saving}>{saving ? t('saving') : t('saveContinue')}</Button>
         </form>
       )}
@@ -602,6 +673,65 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
 
       {step === 4 && product && (
         <div className="grid max-w-2xl gap-5 rounded-lg border p-4">
+          <div className="space-y-2">
+            <h2 className="font-medium">{t('assets')}</h2>
+            {(product.assets ?? []).map((asset) => (
+              <div
+                key={asset.id}
+                className="flex items-start justify-between gap-2 rounded border p-2 text-sm"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{asset.name ?? asset.id}</span>
+                  {asset.url && (
+                    <a
+                      href={asset.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-xs text-muted-foreground underline-offset-4 hover:underline"
+                    >
+                      {asset.url}
+                    </a>
+                  )}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label={t('deleteAsset')}
+                  onClick={() =>
+                    void withSave(() =>
+                      deleteSellerProductAsset(product.ulid, asset.id),
+                    ).then((ok) => {
+                      if (ok) void reload()
+                    })
+                  }
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+            <Input
+              value={assetName}
+              onChange={(event) => setAssetName(event.target.value)}
+              placeholder={t('assetName')}
+              aria-label={t('assetName')}
+              maxLength={200}
+            />
+            <Input
+              value={assetUrl}
+              onChange={(event) => setAssetUrl(event.target.value)}
+              placeholder={t('assetUrl')}
+              aria-label={t('assetUrl')}
+              type="url"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void addAsset()}
+              disabled={saving || !assetName.trim() || !assetUrl.trim()}
+            >
+              {t('addAsset')}
+            </Button>
+          </div>
           <div className="space-y-2">
             <h2 className="font-medium">{t('seo')}</h2>
             <Input value={metaTitle} onChange={(event) => setMetaTitle(event.target.value)} placeholder={t('metaTitle')} aria-label={t('metaTitle')} maxLength={160} />

@@ -68,7 +68,7 @@ export function SellerThemeClient() {
     setMessage(t('activated'))
   }
 
-  const activeUlid = active?.theme_ulid ?? items.find((item) => item.is_active)?.ulid
+  const activeUlid = active?.theme?.ulid ?? active?.theme_ulid ?? items.find((item) => item.is_active)?.ulid
 
   return (
     <section className="space-y-4">
