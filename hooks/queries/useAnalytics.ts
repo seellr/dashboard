@@ -7,10 +7,16 @@ export const productPerfQueryKey = (params?: Record<string, string>) => ['admin'
 export const funnelPerfQueryKey = (params?: Record<string, string>) => ['admin', 'analytics', 'funnels', params ?? {}] as const
 
 function buildQs(params?: Record<string, string>) {
-  const base = 'brand_id=1'
-  if (!params) return `?${base}`
-  const extra = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&')
-  return `?${base}&${extra}`
+  if (!params || Object.keys(params).length === 0) return ''
+  const normalized: Record<string, string> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (!value) continue
+    normalized[key === 'brand_id' ? 'filter_brand_id' : key] = value
+  }
+  const query = Object.entries(normalized)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&')
+  return query ? `?${query}` : ''
 }
 
 export function useRevenueQuery(params?: Record<string, string>) {

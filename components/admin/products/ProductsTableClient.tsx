@@ -115,7 +115,7 @@ export function ProductsTableClient({ locale }: { locale: string }) {
         p.sku?.toLowerCase().includes(q),
     )
   }, [items, search])
-
+  console.log(filteredItems)
   const handleLoadMore = () => {
     if (hasMore && nextCursor) {
       setCursor(nextCursor)
@@ -185,7 +185,7 @@ export function ProductsTableClient({ locale }: { locale: string }) {
                 {row.original.name || row.original.internal_name}
               </span>
               {row.original.featured && (
-                <Star className="size-3.5 fill-amber-400 text-amber-500" title="Featured Product" />
+                <Star className="size-3.5 fill-amber-400 text-amber-500" aria-label="Featured Product" />
               )}
             </div>
             <span className="text-xs text-muted-foreground font-mono">

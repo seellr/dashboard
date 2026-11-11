@@ -11,6 +11,7 @@ import {
   Mail,
   Package,
   Palette,
+  PenTool,
   Receipt,
   Settings,
   ShoppingCart,
@@ -46,6 +47,12 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
       { key: 'products', path: (l) => `/${l}/seller/products`, icon: Package },
       { key: 'media', path: (l) => `/${l}/seller/media`, icon: ImageIcon },
       { key: 'theme', path: (l) => `/${l}/seller/theme`, icon: Palette },
+      { key: 'strings', path: (l) => `/${l}/seller/theme/strings`, icon: PenTool },
+      {
+        key: 'pageBuilder',
+        path: (l) => `/${l}/seller/theme-builder/editor`,
+        icon: PenTool,
+      },
       { key: 'domains', path: (l) => `/${l}/seller/domains`, icon: Globe2 },
     ],
   },
@@ -70,6 +77,7 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
   {
     groupKey: 'account',
     items: [
+      { key: 'plans', path: (l) => `/${l}/seller/plans`, icon: Receipt },
       { key: 'settings', path: (l) => `/${l}/seller/settings`, icon: Settings },
     ],
   },
@@ -98,7 +106,7 @@ export function SellerSidebar({
               </div>
               <div className="grid min-w-0 flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {storeName ?? t('nav.dashboard')}
+                  {storeName ?? t('nav.myStore')}
                 </span>
                 <span className="truncate text-xs text-sidebar-foreground/50">
                   Seller

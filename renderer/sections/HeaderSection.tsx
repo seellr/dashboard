@@ -1,7 +1,109 @@
-import type { Locale, SectionInstance } from '@/shared/types/builder'
-import { settingText } from '../section-utils'
+'use client'
+
+import { Languages, Menu, Moon, ShoppingBag, Sun, UserRound, X } from 'lucide-react'
+import { useState } from 'react'
+import type { Locale, SectionInstance, SettingValue } from '@/shared/types/builder'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
+import { settingString, settingText } from '../section-utils'
+
+function readLogoUrl(settings: SectionInstance['settings']): string {
+  const value: SettingValue | undefined = settings.logo
+  if (typeof value === 'string' && value) return value
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const reference = value as { url?: unknown; thumb_url?: unknown }
+    if (typeof reference.url === 'string' && reference.url) return reference.url
+    if (typeof reference.thumb_url === 'string' && reference.thumb_url) return reference.thumb_url
+  }
+  return ''
+}
 
 export function HeaderSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   const label = settingText(section.settings, 'label', locale, locale === 'ar' ? 'متجري' : 'My store')
-  return <header className="flex items-center justify-between border-b px-6 py-4"><span className="font-semibold">{label}</span><nav className="flex gap-4 text-sm text-muted-foreground"><span>{locale === 'ar' ? 'الرئيسية' : 'Home'}</span><span>{locale === 'ar' ? 'المتجر' : 'Shop'}</span></nav></header>
+  const logo = resolveMediaUrl(readLogoUrl(section.settings))
+  const sticky = section.settings.sticky !== false
+  const links = (section.blocks ?? []).filter((block) => (block.type ?? 'link') === 'link')
+  const ar = locale === 'ar'
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [dark, setDark] = useState(false)
+  const toggleTheme = () => {
+    const next = !dark
+    setDark(next)
+    document.documentElement.classList.toggle('dark', next)
+  }
+
+  const brand = (
+    <span className="flex items-center gap-2 text-lg font-bold">
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logo} alt={label} className="size-9 rounded-xl object-cover" />
+      ) : (
+        <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+          <ShoppingBag className="size-4" />
+        </span>
+      )}
+      {label}
+    </span>
+  )
+
+  const navLinks = links.length > 0
+    ? links.map((link) => (
+        <a
+          key={link.id}
+          href={settingString(link.settings, 'url', '/')}
+          className="hover:text-foreground"
+        >
+          {settingText(link.settings, 'label', locale, locale === 'ar' ? 'رابط' : 'Link')}
+        </a>
+      ))
+    : [
+        <span key="home" className="text-foreground">{ar ? 'الرئيسية' : 'Home'}</span>,
+        <span key="shop">{ar ? 'المتجر' : 'Shop'}</span>,
+        <span key="about">{ar ? 'عن المتجر' : 'About'}</span>,
+      ]
+
+  return (
+    <header className={`${sticky ? 'sticky top-0' : 'relative'} z-30 border-b border-border/70 bg-background/95 px-6 py-4 shadow-sm backdrop-blur-md`}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        {brand}
+        <nav className="hidden gap-7 text-sm font-medium text-muted-foreground md:flex">{navLinks}</nav>
+        <div className="flex items-center gap-2">
+          <button type="button" className="hidden h-10 items-center gap-1.5 rounded-full border bg-card px-3 text-xs font-bold sm:inline-flex">
+            <Languages className="size-4" />
+            {ar ? 'EN' : 'AR'}
+          </button>
+          <button type="button" onClick={toggleTheme} className="hidden size-10 place-items-center rounded-full border bg-card sm:grid" aria-label={dark ? 'Light mode' : 'Dark mode'}>
+            {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
+          <button type="button" className="hidden size-10 place-items-center rounded-full border bg-card sm:grid" aria-label={ar ? 'الحساب' : 'Account'}>
+            <UserRound className="size-4" />
+          </button>
+          <span className="grid size-10 place-items-center rounded-full border bg-card">
+            <ShoppingBag className="size-4" />
+          </span>
+          <button type="button" onClick={() => setMenuOpen((value) => !value)} className="grid size-10 place-items-center rounded-full border bg-card md:hidden" aria-expanded={menuOpen}>
+            {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        </div>
+      </div>
+      {menuOpen && (
+        <div className="border-t border-border/70 pb-2 pt-4 md:hidden">
+          <nav className="grid gap-1 text-sm font-semibold">{navLinks}</nav>
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border/70 pt-3">
+            <button type="button" className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-bold">
+              <Languages className="size-4" />
+              {ar ? 'EN' : 'AR'}
+            </button>
+            <button type="button" onClick={toggleTheme} className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-bold">
+              {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              {dark ? (ar ? 'فاتح' : 'Light') : (ar ? 'داكن' : 'Dark')}
+            </button>
+            <button type="button" className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-bold">
+              <UserRound className="size-4" />
+              {ar ? 'حسابي' : 'Account'}
+            </button>
+          </div>
+        </div>
+      )}
+    </header>
+  )
 }

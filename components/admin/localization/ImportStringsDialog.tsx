@@ -9,11 +9,11 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useImportUiStrings } from '@/hooks/queries/useUiStrings'
-import type { UiStringLocale, UiStringMap, UiStringScope } from '@/lib/admin/ui-strings'
+import type { UiStringId, UiStringLocale, UiStringMap, UiStringScope } from '@/lib/admin/ui-strings'
 
 interface Props {
   scope: UiStringScope
-  id: number
+  id: UiStringId
   locale: UiStringLocale
   errorMessage: (errorCode: string, fallback: string) => string
 }

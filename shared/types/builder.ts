@@ -9,6 +9,7 @@ export type PageType =
   | 'cart'
   | 'account'
   | '404'
+  | 'not_found'
   | 'header'
   | 'footer'
   | 'lead_magnet'
@@ -17,8 +18,6 @@ export type PageType =
   | 'downsell'
   | 'thank_you'
   | 'custom'
-
-export type SettingValue = string | number | boolean | null | MediaReference
 
 export interface MediaReference {
   ulid: string
@@ -31,36 +30,92 @@ export interface LocalizedValue {
   en: string
 }
 
-export type SettingType = 'color' | 'font' | 'toggle' | 'select' | 'text' | 'image'
+/**
+ * Values stored in a page section/block. The builder keeps this intentionally
+ * broad because the documented schema allows localized objects, numbers,
+ * booleans, media references and lists (for `product_list` settings).
+ */
+export type SettingValue =
+  | string
+  | number
+  | boolean
+  | null
+  | MediaReference
+  | LocalizedValue
+  | SettingValue[]
+  | { [key: string]: unknown }
 
+/** Setting types returned by `GET /subscriber/theme/schema`. */
+export type SettingType =
+  | 'text'
+  | 'textarea'
+  | 'richtext'
+  | 'url'
+  | 'number'
+  | 'range'
+  | 'toggle'
+  | 'color'
+  | 'font'
+  | 'select'
+  | 'image'
+  | 'product'
+  | 'product_list'
+
+export interface SettingOption {
+  value: string
+  label: string
+}
+
+/**
+ * Matches the live `GET /subscriber/theme/schema` setting definition:
+ * `{ key, type, label, help, default, translatable, required, min, max, step, options }`.
+ * Labels/options are plain strings (already localized by the API) and the
+ * default value lives under `default` (not `default_value`).
+ */
 export interface SettingDefinition {
   key: string
-  label: LocalizedValue
   type: SettingType
+  label: string
+  help?: string | null
+  default?: SettingValue
   translatable?: boolean
   required?: boolean
-  options?: Array<{ value: string; label: LocalizedValue }>
-  default_value?: SettingValue
-  // TODO: confirm backend constraints for min/max, formats, and image metadata.
+  min?: number | null
+  max?: number | null
+  step?: number | null
+  options?: SettingOption[]
 }
 
 export interface BlockDefinition {
-  type: string
-  label: LocalizedValue
+  handle: string
+  name: string
+  limit?: number | null
   settings: SettingDefinition[]
 }
 
 export interface SectionDefinition {
-  type: string
-  label: LocalizedValue
+  handle: string
+  name: string
+  max_blocks?: number | null
+  limit_per_page?: number | null
+  page_types?: string[]
   settings: SettingDefinition[]
   blocks?: BlockDefinition[]
 }
 
+export interface ThemeDescriptor {
+  ulid: string
+  handle: string
+  version?: string | null
+  name: string
+}
+
 export interface ThemeSchema {
+  theme?: ThemeDescriptor
+  settings: SettingDefinition[]
   sections: SectionDefinition[]
-  // TODO: confirm whether theme-level settings are returned separately.
-  theme_settings?: SettingDefinition[]
+  fonts?: string[]
+  locales?: string[]
 }
 
 export interface ThemeRuntimeSettings {
@@ -76,14 +131,14 @@ export interface ThemeRuntimeSettings {
 export interface BlockInstance {
   id: string
   type: string
-  settings: Record<string, SettingValue | LocalizedValue>
+  settings: Record<string, SettingValue>
   hidden?: boolean
 }
 
 export interface SectionInstance {
   id: string
   type: string
-  settings: Record<string, SettingValue | LocalizedValue>
+  settings: Record<string, SettingValue>
   blocks?: BlockInstance[]
   hidden?: boolean
 }
@@ -94,31 +149,42 @@ export interface BuilderPage {
   slug?: string
   name: LocalizedValue
   sections: SectionInstance[]
-  // TODO: confirm draft version and publication metadata fields.
 }
 
+/**
+ * Theme summary returned by `GET /themes` and `GET /themes/{ulid}`.
+ * `name`/`description` are already localized by the API (plain strings).
+ */
 export interface ThemeSummary {
   ulid: string
   slug: string
   status: { id: string | number; label: string }
-  name: LocalizedValue
-  description?: LocalizedValue
-  preview_url?: string
-  settings: SettingDefinition[]
+  name: string
+  description?: string | null
+  preview_url?: string | null
+  version?: string | null
+  has_manifest?: boolean
+  settings?: SettingDefinition[] | null
   created_at: string
 }
 
+/**
+ * Response from `GET /subscriber/theme` (live) and the documented
+ * `theme_ulid/theme_name/activated_at/settings` shape. Both are supported.
+ */
 export interface SubscriberTheme {
-  theme_ulid: string
-  theme_name: LocalizedValue
-  activated_at: string
-  settings: Record<string, SettingValue | LocalizedValue>[]
+  theme?: ThemeDescriptor
+  has_unpublished_changes?: boolean
+  published_at?: string | null
+  theme_ulid?: string
+  theme_name?: string | LocalizedValue
+  activated_at?: string
+  settings?: Record<string, SettingValue> | SettingDefinition[] | null
 }
 
 export interface PreviewTokenResponse {
   token: string
   expires_at?: string
-  // TODO: confirm whether the backend returns a ready-made share URL.
   url?: string
 }
 

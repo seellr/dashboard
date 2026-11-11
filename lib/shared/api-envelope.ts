@@ -1,18 +1,18 @@
 import { z } from 'zod'
 
 export const apiMetaSchema = z.object({
-  per_page: z.number().optional(),
-  next_cursor: z.string().nullable().default(null),
-  has_more: z.boolean(),
+  per_page: z.number().nullish(),
+  next_cursor: z.string().nullish(),
+  has_more: z.boolean().nullish(),
 })
 
 export const apiEnvelopeSchema = z.object({
   success: z.boolean(),
-  message: z.string().optional(),
-  data: z.unknown().optional(),
-  error_code: z.string().optional(),
-  errors: z.record(z.string(), z.array(z.string())).optional(),
-  meta: apiMetaSchema.optional(),
+  message: z.string().nullish(),
+  data: z.unknown().nullish(),
+  error_code: z.string().nullish(),
+  errors: z.record(z.string(), z.array(z.string())).nullish(),
+  meta: apiMetaSchema.nullish(),
 })
 
 export type ParsedApiEnvelope = z.infer<typeof apiEnvelopeSchema>

@@ -78,16 +78,20 @@ export function MediaLibrary({
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
-  const [localSelected, setLocalSelected] = useState<string[]>(selectedUlids)
+  const [localSelected, setLocalSelected] = useState<string[]>(() => selectedUlids)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
 
   const { data: folders = [] } = useMediaFolders()
   const bulkDeleteMutation = useBulkDeleteMedia()
 
-  // Sync external selection
+  // Sync external selection — compare by serialized value to avoid
+  // infinite loops when the parent passes a new array reference each render.
+  const selectedUlidsKey = selectedUlids.join(',')
   useEffect(() => {
+    //eslint-disable-next-line 
     setLocalSelected(selectedUlids)
-  }, [selectedUlids])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUlidsKey])
 
   // Debounce search
   useEffect(() => {
@@ -333,11 +337,10 @@ export function MediaLibrary({
                       toggleSelect(item)
                     }
                   }}
-                  className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all text-start cursor-pointer select-none bg-card ${
-                    isSelected
+                  className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all text-start cursor-pointer select-none bg-card ${isSelected
                       ? 'ring-2 ring-primary border-primary shadow-sm'
                       : 'hover:border-primary/50 hover:shadow-xs'
-                  }`}
+                    }`}
                 >
                   {/* Thumbnail Container */}
                   <div className="relative aspect-square w-full bg-muted/40 overflow-hidden flex items-center justify-center">
@@ -358,11 +361,10 @@ export function MediaLibrary({
                     {/* Selection Checkbox overlay */}
                     {selectable && (
                       <div
-                        className={`absolute top-2 start-2 size-6 rounded-md flex items-center justify-center transition-all ${
-                          isSelected
+                        className={`absolute top-2 start-2 size-6 rounded-md flex items-center justify-center transition-all ${isSelected
                             ? 'bg-primary text-primary-foreground shadow-xs'
                             : 'bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 hover:bg-black/60'
-                        }`}
+                          }`}
                       >
                         <Check className="size-3.5 stroke-[3]" />
                       </div>

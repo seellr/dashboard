@@ -43,8 +43,11 @@ export function useDeleteAutomationRuleMutation() {
 export function useToggleAutomationRuleMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ulid: string) => {
-      const result = await adminFetchClient(`/automation-rules/${ulid}/toggle`, { method: 'PUT' })
+    mutationFn: async ({ ulid, active }: { ulid: string; active: boolean }) => {
+      const result = await adminFetchClient(`/automation-rules/${ulid}/toggle`, {
+        method: 'PATCH',
+        body: JSON.stringify({ active }),
+      })
       if (!result.ok) throw new Error((result as { message: string }).message)
       return result.data
     },

@@ -113,8 +113,8 @@ export function MediaDetailsSheet({
   const onSubmit = async (data: UpdateMediaInput) => {
     const payload: UpdateMediaInput = {
       name: data.name?.trim() || undefined,
-      alt_text: data.alt_text !== undefined ? data.alt_text.trim() || null : undefined,
-      folder: data.folder !== undefined ? data.folder.trim() || null : undefined,
+      alt_text: data.alt_text !== undefined ? (data.alt_text ? data.alt_text.trim() : '') || null : undefined,
+      folder: data.folder !== undefined ? (data.folder ? data.folder.trim() : '') || null : undefined,
     }
 
     const result = await updateMutation.mutateAsync({
@@ -194,12 +194,16 @@ export function MediaDetailsSheet({
               type="button"
               variant="outline"
               size="icon-sm"
-              asChild
               aria-label="Open in new tab"
+              render={
+                <a
+                  href={media.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
             >
-              <a href={media.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-3.5" />
-              </a>
+              <ExternalLink className="size-3.5" />
             </Button>
           </div>
 

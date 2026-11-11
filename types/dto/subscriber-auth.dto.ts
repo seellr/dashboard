@@ -41,7 +41,6 @@ export const SubscriberUserSchema = z.object({
   roles: z.array(z.unknown()).optional().default([]),
   created_at: z.string().nullish(),
 })
-
 export type SubscriberUser = z.infer<typeof SubscriberUserSchema>
 
 export const LoginRequestSchema = z.object({
@@ -53,7 +52,7 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>
 
 export const LoginResponseSchema = z.object({
   access_token: z.string({ error: 'required' }).min(1),
-  token_type: z.literal('Bearer'),
+  token_type: z.string().optional().default('Bearer'),
   expires_in: z.number().int().positive(),
   user: SubscriberUserSchema,
 })
@@ -67,13 +66,13 @@ export const MeResponseSchema = z.union([
 
 export const RegisterRequestSchema = z
   .object({
-    first_name: nameSchema('name_invalid'),
-    last_name: nameSchema('name_invalid'),
-    email: emailSchema(255),
+    first_name: nameSchema('name_invalid').nullish(),
+    last_name: nameSchema('name_invalid').nullish(),
+    email: emailSchema(255).nullish(),
     phone: z.string({ error: 'required' })
       .min(1, 'required')
       .max(16, 'phone_invalid')
-      .regex(PHONE_REGEX, 'phone_invalid'),
+      .regex(PHONE_REGEX, 'phone_invalid').nullish(),
     password: passwordSchema,
     password_confirmation: z.string({ error: 'required' }).min(1, 'required'),
   })

@@ -15,15 +15,26 @@
     "automation": "الأتمتة",
     "ai-tools": "أدوات الذكاء الاصطناعي",
     "quizzes": "الاختبارات",
+    "theme-builder": "منشئ القوالب",
     "vat": "ضريبة القيمة المضافة",
     "media": "مكتبة الوسائط",
     "localization": "الترجمة",
+    "shipping": "الشحن",
+    "delivery": "صلاحيات التسليم",
+    "tenants": "المستأجرون",
+    "platform": "نظرة عامة على المنصة",
+    "plans": "الباقات",
+    "domains": "النطاقات",
+    "admins": "المشرفون والأدوار",
+    "logs": "سجلات التدقيق",
     "group": {
       "store": "المتجر",
       "growth": "النمو",
       "funnels": "القمع والبريد",
       "tools": "الأدوات",
-      "content": "المحتوى"
+      "content": "المحتوى",
+      "operations": "العمليات",
+      "platform": "المنصة"
     }
   },
   "tab": {
@@ -88,6 +99,8 @@
       "vatRule": "قاعدة الضريبة",
       "couponEligible": "قابل للخصم بكوبون",
       "featured": "مميز",
+      "trackStock": "تتبع المخزون",
+      "allowBackorder": "السماح بالطلب المسبق",
       "save": "حفظ",
       "saveSuccess": "تم حفظ المنتج",
       "saveError": "تعذر حفظ المنتج",
@@ -108,7 +121,7 @@
       "salePriceInvalid": "سعر الخصم يجب أن يكون أقل من السعر الأساسي",
       "skuTaken": "رمز SKU مستخدم بالفعل لمنتج آخر",
       "slugTaken": "الرابط المخصص مستخدم بالفعل",
-      "selfBundleNotAllowed": "لا يمكن إضافة المنتج إلى حزمته الخاصة"
+      "selfBundleNotAllowed": "لا يمكن إضافة المنتج إلى حزمة خاصة"
     },
     "wizard": {
       "step1": "الأساسيات",
@@ -267,7 +280,7 @@
       "emptyFile": "يجب أن يحتوي الملف على نص واحد على الأقل."
     },
     "errors": {
-      "invalidLocale": "لغة غير صالحة. اللغة العربية والإنجليزية فقط مدعومتان.",
+      "invalidLocale": "لغة غير صالحة. اللغة العربية والإنجليزية فقط مدعومة.",
       "keyNotFound": "هذا النص لم يعد مخصصًا، لذا لم يتم إعادة التعيين.",
       "brandNotFound": "العلامة التجارية غير موجودة.",
       "themeNotFound": "القالب غير موجود."
@@ -275,25 +288,44 @@
   },
   "themeBuilder": {
     "title": "القوالب",
-    "description": "اختر قالب واجهة متجرك وفعّله.",
+    "description": "إدارة كتالوج قوالب المتجر.",
+    "adminDescription": "إنشاء القوالب وتعديلها ونشرها وأرشفتها وحذفها عبر واجهة إدارة القوالب.",
     "loading": "جارٍ تحميل القوالب...",
-    "empty": "لا توجد قوالب منشورة متاحة.",
+    "empty": "لم يتم العثور على قوالب.",
+    "create": "إنشاء قالب",
+    "createTitle": "إنشاء قالب",
+    "editTitle": "تعديل القالب",
+    "slug": "المعرّف",
+    "previewUrl": "رابط المعاينة",
+    "translations": "الترجمة",
+    "name": "الاسم",
+    "descriptionLabel": "الوصف",
+    "settings": "الإعدادات",
+    "addSetting": "إضافة إعداد",
+    "settingKey": "المفتاح",
+    "settingType": "النوع",
+    "defaultValue": "القيمة الافتراضية",
+    "options": "الخيارات",
+    "removeSetting": "إزالة الإعداد",
+    "settingsCount": "{count} إعدادات",
+    "noManifest": "بدون ملف تعريف",
+    "editLimited": "يمكن تحديث رابط المعاينة فقط لقالب موجود. يتم تعيين المعرّف والترجمات والإعدادات عند إنشاء القالب.",
+    "settingTypes": { "1": "لون", "2": "خط", "3": "تفعيل/تعطيل", "4": "اختيار", "5": "نص" },
+    "edit": "تعديل",
+    "archive": "أرشفة",
+    "delete": "حذف",
+    "deleteConfirm": "حذف هذا القالب؟ لا يمكن التراجع عن ذلك.",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "saveError": "تعذر حفظ القالب.",
+    "actionError": "تعذر تنفيذ إجراء القالب.",
     "loadError": "تعذر تحميل القوالب. يرجى المحاولة مرة أخرى.",
     "storeUnavailable": "متجرك غير متاح مؤقتًا. يرجى المحاولة بعد قليل.",
     "retry": "إعادة المحاولة",
     "loadMore": "تحميل المزيد",
     "details": "التفاصيل",
-    "activate": "تفعيل",
-    "activated": "مفعّل",
-    "active": "نشط",
-    "activeTheme": "النشط: {name}",
     "noDescription": "لا يوجد وصف متاح.",
-    "confirmTitle": "تفعيل هذا القالب؟",
-    "confirmDescription": "سيصبح {name} القالب النشط لواجهة متجرك.",
-    "confirm": "تفعيل القالب",
     "cancel": "إلغاء",
-    "activating": "جارٍ التفعيل...",
-    "activateError": "تعذر تفعيل القالب. يرجى المحاولة مرة أخرى.",
     "previewDraft": "معاينة المسودة",
     "copyPreviewLink": "نسخ رابط المعاينة",
     "publish": "نشر",
@@ -306,10 +338,13 @@
     "discardConfirmDescription": "سيؤدي ذلك إلى استعادة آخر مسودة محفوظة ولا يمكن التراجع عنه.",
     "publishError": "تعذر إكمال العملية. يرجى المحاولة مرة أخرى.",
     "stringsTitle": "نصوص واجهة القالب",
-    "stringsDescription": "إدارة التخصيصات العربية والإنجليزية للقالب النشط.",
+    "stringsDescription": "إدارة التخصيصات العربية والإنجليزية لأي قالب.",
     "stringsCount": "{count} نصوص",
     "stringsEmpty": "لا توجد تخصيصات.",
     "stringsError": "تعذر تحميل نصوص القالب.",
+    "selectTheme": "القالب",
+    "noThemes": "لا توجد قوالب متاحة.",
+    "deleteStringConfirm": "حذف تخصيص {key}؟",
     "importStrings": "استيراد JSON",
     "importConfirmTitle": "استبدال جميع التخصيصات؟",
     "importConfirmDescription": "سيؤدي ذلك إلى استبدال جميع تخصيصات هذه اللغة بـ {count} نصوص مستوردة.",
@@ -382,5 +417,22 @@
       "uploadFailed": "فشل الرفع",
       "invalidFolder": "اسم المجلد يحتوي على أحرف غير صالحة."
     }
+  },
+  "admin": {
+    "createAdmin": "إنشاء مسؤول",
+    "editAdmin": "تعديل المسؤول",
+    "fillFormToCreateAdmin": "املأ النموذج لإنشاء مسؤول",
+    "fillFormToEditAdmin": "املأ النموذج لتعديل المسؤول"
+  },
+  "plan": {
+    "createPlan": "إنشاء باقة",
+    "editPlan": "تعديل الباقة",
+    "fillFormToCreatePlan": "املأ النموذج لإنشاء باقة",
+    "fillFormToEditPlan": "املأ النموذج لتعديل الباقة"
+  },
+  "tenant": {
+    "provision": "توفير باقة",
+    "noSubscribers": "لا مشتركون موجودون",
+    "selectSubscriber": "اختر مشتركاً"
   }
 }

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ProductImagesManager } from './ProductImagesManager'
+import { useProductQuery } from '@/hooks/queries/useProducts'
 import type { Product } from '@/types/dto/product.dto'
 
 interface StepImagesFormProps {
@@ -19,8 +20,12 @@ export function StepImagesForm({
   onBack,
 }: StepImagesFormProps) {
   const t = useTranslations('admin.products')
+  const { data: liveProduct, refetch } = useProductQuery(ulid)
 
-  const galleryItems = product?.images?.map((img) => ({
+  // Use the live query data if available, otherwise fall back to the prop
+  const resolvedProduct = liveProduct ?? product
+
+  const galleryItems = resolvedProduct?.images?.map((img) => ({
     id: img.id,
     url: img.url,
     alt_text: img.alt_text ?? null,
@@ -30,8 +35,10 @@ export function StepImagesForm({
     <div className="flex flex-col gap-6">
       <ProductImagesManager
         productUlid={ulid}
-        heroImageUrl={product?.hero_image_url ?? null}
+        heroImageUrl={resolvedProduct?.hero_image_url ?? null}
         galleryImages={galleryItems}
+        onHeroImageUpdated={() => { void refetch() }}
+        onGalleryUpdated={() => { void refetch() }}
       />
 
       {/* Navigation Buttons */}
@@ -49,3 +56,4 @@ export function StepImagesForm({
     </div>
   )
 }
+

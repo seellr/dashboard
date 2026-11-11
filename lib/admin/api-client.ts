@@ -13,18 +13,24 @@ export async function adminFetchClient<T>(path: string, init?: RequestInit): Pro
     const brandId = typeof window !== 'undefined'
       ? (localStorage.getItem('admin_active_brand_id') ?? '1')
       : '1'
+    const isFormData =
+      typeof FormData !== 'undefined' && init?.body instanceof FormData
 
     const res = await fetch(`/api/admin${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         'x-locale': locale,
         'x-brand-id': brandId,
         ...(init?.headers as Record<string, string> | undefined),
       },
     })
-    const json = await res.json().catch(() => null)
+    const text = await res.text()
+    if (res.status === 204 || text.trim().length === 0) {
+      return res.ok ? { ok: true, data: null as T } : { ok: false, message: `Request failed (${res.status})`, errorCode: `http_${res.status}`, errors: null, status: res.status }
+    }
+    const json = JSON.parse(text) as { success?: boolean; message?: string; error_code?: string; errors?: Record<string, string[]> | null; data?: unknown; meta?: unknown }
 
     if (!res.ok || !json?.success) {
       return {
@@ -36,7 +42,7 @@ export async function adminFetchClient<T>(path: string, init?: RequestInit): Pro
       }
     }
 
-    return { ok: true, data: json.data as T, meta: json.meta }
+    return { ok: true, data: json.data as T, meta: json.meta as import('@/lib/admin/api-server').ApiMeta | undefined }
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e
     return { ok: false, message: 'Network error', errorCode: 'network_error', errors: null, status: 0 }

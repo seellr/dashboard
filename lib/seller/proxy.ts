@@ -52,9 +52,11 @@ export async function forwardSubscriberRequest(
     const contentType = request.headers.get('content-type') ?? ''
     const isMultipart = contentType.includes('multipart/form-data')
 
-    const headers = isMultipart
+    const headers = new Headers(isMultipart
       ? subscriberMultipartHeaders(locale, token)
-      : subscriberHeaders(locale, token)
+      : subscriberHeaders(locale, token))
+    const idempotencyKey = request.headers.get('idempotency-key')
+    if (idempotencyKey) headers.set('Idempotency-Key', idempotencyKey)
 
     const hasBody = request.method !== 'GET' && request.method !== 'HEAD'
     let body: BodyInit | undefined
@@ -69,21 +71,22 @@ export async function forwardSubscriberRequest(
     }
 
     const target = `${BACKEND_API_URL}${resolved.target}${request.nextUrl.search}`
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[subscriber-proxy] ${request.method} ${target}`)
-    }
+    const logProxy = process.env.NODE_ENV !== 'production'
 
-    const upstream = await fetch(target, {
-      method: request.method,
-      headers,
-      body,
-      cache: 'no-store',
-    })
+    const upstream = await fetch(target, { method: request.method, headers, body, cache: 'no-store', redirect: 'manual' })
+    if (logProxy) console.log(`[subscriber-proxy] ${request.method} ${target} -> ${upstream.status}`)
+
+    if (upstream.status >= 300 && upstream.status < 400) {
+      const location = upstream.headers.get('location')
+      return location ? NextResponse.redirect(location, upstream.status) : errorResponse('Invalid redirect from upstream server', 'upstream_invalid_redirect', 502)
+    }
 
     const text = await upstream.text()
-    if (upstream.status === 204 || text.trim().length === 0) {
+    if (upstream.status === 204) {
       return new NextResponse(null, { status: upstream.status })
     }
+
+    if (text.trim().length === 0) return new NextResponse(null, { status: upstream.status })
 
     let payload: unknown
     try {
@@ -96,17 +99,20 @@ export async function forwardSubscriberRequest(
       )
     }
 
-    const isBareApiKeyFailure =
+    const isBareMessage =
       typeof payload === 'object' &&
       payload !== null &&
       !('success' in payload) &&
-      'message' in payload &&
-      (payload as { message?: unknown }).message === 'Wrong way!'
-    if (
-      upstream.status === 401 &&
-      resolved.access === 'subscriber' &&
-      !isBareApiKeyFailure
-    ) {
+      'message' in payload
+    if (upstream.status === 401 && isBareMessage) {
+      return errorResponse(
+        'The seller service is unavailable. Please try again later.',
+        'service_misconfigured',
+        502,
+      )
+    }
+
+    if (upstream.status === 401 && resolved.access === 'subscriber') {
       await clearSessionOnUnauthorized()
     }
 

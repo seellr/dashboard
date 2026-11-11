@@ -8,12 +8,13 @@ import {
   uiStringKeyPath,
   uiStringOverridesPath,
   uiStringResolvedPath,
+  type UiStringId,
   type UiStringLocale,
   type UiStringMap,
   type UiStringScope,
 } from '@/lib/admin/ui-strings'
 
-export const uiStringsQueryKey = (scope: UiStringScope, id: number, locale: UiStringLocale) =>
+export const uiStringsQueryKey = (scope: UiStringScope, id: UiStringId, locale: UiStringLocale) =>
   ['admin', 'ui-strings', scope, id, locale] as const
 
 async function unwrap<T>(pending: Promise<ApiResult<T>>): Promise<T> {
@@ -22,23 +23,25 @@ async function unwrap<T>(pending: Promise<ApiResult<T>>): Promise<T> {
   return result.data
 }
 
-export function useUiStringsResolved(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useUiStringsResolved(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   return useQuery({
     queryKey: [...uiStringsQueryKey(scope, id, locale), 'resolved'],
     queryFn: async () =>
       normalizeStringMap(await unwrap<unknown>(adminFetchClient(uiStringResolvedPath(scope, id, locale)))),
+    enabled: id !== '' && id !== null && id !== undefined,
   })
 }
 
-export function useUiStringsOverrides(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useUiStringsOverrides(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   return useQuery({
     queryKey: [...uiStringsQueryKey(scope, id, locale), 'overrides'],
     queryFn: async () =>
       normalizeStringMap(await unwrap<unknown>(adminFetchClient(uiStringOverridesPath(scope, id, locale)))),
+    enabled: id !== '' && id !== null && id !== undefined,
   })
 }
 
-export function useUpsertUiString(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useUpsertUiString(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ key, value }: { key: string; value: string }) =>
@@ -52,7 +55,7 @@ export function useUpsertUiString(scope: UiStringScope, id: number, locale: UiSt
   })
 }
 
-export function useDeleteUiString(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useDeleteUiString(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (key: string) => adminFetchClient(uiStringKeyPath(scope, id, locale, key), { method: 'DELETE' }),
@@ -62,13 +65,13 @@ export function useDeleteUiString(scope: UiStringScope, id: number, locale: UiSt
   })
 }
 
-export function useExportUiStrings(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useExportUiStrings(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   return useMutation({
     mutationFn: () => adminFetchClient(uiStringExportPath(scope, id, locale)),
   })
 }
 
-export function useImportUiStrings(scope: UiStringScope, id: number, locale: UiStringLocale) {
+export function useImportUiStrings(scope: UiStringScope, id: UiStringId, locale: UiStringLocale) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (strings: UiStringMap) =>

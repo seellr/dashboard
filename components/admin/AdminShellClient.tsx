@@ -18,7 +18,8 @@ import {
   LayoutDashboard, Package, ShoppingCart, Ticket, LogOut,
   BarChart3, Users, GitBranch, Mail, Zap, Bot, HelpCircle,
   ChevronsUpDown, Settings, User, Languages, ImageIcon, CheckCircle2,
-  Receipt, Loader2Icon,
+  Receipt, Loader2Icon, Palette, Truck, KeyRound, Database, CreditCard,
+  Globe, ShieldCheck, ScrollText,
 } from 'lucide-react'
 import { useAdminMe } from '@/hooks/queries/useAdminMe'
 import { useActiveBrand, BRANDS, type Brand } from '@/lib/admin/brand-context'
@@ -56,7 +57,8 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
     items: [
       { key: 'ai-tools', path: (l) => `/${l}/ai-tools`, icon: Bot },
       { key: 'quizzes', path: (l) => `/${l}/quizzes`, icon: HelpCircle },
-      // { key: 'brand', path: (l) => `/${l}/brand`, icon: Palette },
+      { key: 'theme-builder', path: (l) => `/${l}/theme-builder`, icon: Palette },
+      { key: 'brand', path: (l) => `/${l}/brand`, icon: Palette },
       { key: 'vat', path: (l) => `/${l}/vat`, icon: Receipt },
     ],
   },
@@ -65,6 +67,24 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
     items: [
       { key: 'media', path: (l) => `/${l}/media`, icon: ImageIcon },
       { key: 'localization', path: (l) => `/${l}/localization`, icon: Languages },
+    ],
+  },
+  {
+    groupKey: 'operations',
+    items: [
+      { key: 'shipping', path: (l) => `/${l}/shipping`, icon: Truck },
+      { key: 'delivery', path: (l) => `/${l}/delivery`, icon: KeyRound },
+      { key: 'tenants', path: (l) => `/${l}/tenants`, icon: Database },
+    ],
+  },
+  {
+    groupKey: 'platform',
+    items: [
+      { key: 'platform', path: (l) => `/${l}/platform`, icon: Settings },
+      { key: 'plans', path: (l) => `/${l}/plans`, icon: CreditCard },
+      { key: 'domains', path: (l) => `/${l}/domains`, icon: Globe },
+      { key: 'admins', path: (l) => `/${l}/admins`, icon: ShieldCheck },
+      { key: 'logs', path: (l) => `/${l}/logs`, icon: ScrollText },
     ],
   },
 ]

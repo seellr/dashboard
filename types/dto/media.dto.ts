@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { MEDIA_BASE_URL, resolveMediaUrl } from '@/shared/lib/media-url'
 
 export const ALLOWED_MEDIA_EXTENSIONS = [
   'jpg',
@@ -36,8 +37,14 @@ export const ALLOWED_MEDIA_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const
 
-export const MAX_MEDIA_FILE_SIZE = 20 * 1024 * 1024 // Backend limit: 20MB
+export const MAX_MEDIA_FILE_SIZE = 10 * 1024 * 1024
 export const MAX_MEDIA_BATCH_COUNT = 20
+
+export const BACKEND_BASE_URL = MEDIA_BASE_URL
+
+export function getMediaUrl(url: string | null | undefined): string {
+  return resolveMediaUrl(url)
+}
 
 export const ALLOWED_PRODUCT_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'] as const
 export const ALLOWED_PRODUCT_IMAGE_MIME_TYPES = [

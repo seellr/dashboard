@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useQuery } from '@tanstack/react-query'
 import { sileo } from 'sileo'
 import { FileDown, Loader2, Search, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useActiveBrand } from '@/lib/admin/brand-context'
+import { adminThemeApi, type AdminTheme } from '@/lib/admin/theme-client'
 import {
   useDeleteUiString,
   useExportUiStrings,
@@ -19,6 +21,7 @@ import {
 import {
   normalizeStringMap,
   UI_STRING_LOCALES,
+  type UiStringId,
   type UiStringLocale,
   type UiStringMap,
   type UiStringScope,
@@ -54,7 +57,7 @@ function UiStringRow({
   errorMessage,
 }: {
   scope: UiStringScope
-  id: number
+  id: UiStringId
   locale: UiStringLocale
   item: StringRow
   errorMessage: (errorCode: string, fallback: string) => string
@@ -171,15 +174,35 @@ export function LocalizationClient() {
   const { activeBrand } = useActiveBrand()
 
   const [scope, setScope] = useState<UiStringScope>('brand')
-  const [themeId, setThemeId] = useState(1)
+  const [themeUlid, setThemeUlid] = useState<string | null>(null)
   const [locale, setLocale] = useState<UiStringLocale>('ar')
   const [search, setSearch] = useState('')
 
-  const id = scope === 'brand' ? activeBrand.id : themeId
+  const themesQuery = useQuery({
+    queryKey: ['admin-themes'],
+    queryFn: async () => {
+      const result = await adminThemeApi.list('?per_page=100')
+      if (!result.ok) throw new Error(result.message)
+      return result.data
+    },
+    enabled: scope === 'theme',
+  })
 
-  const resolvedQuery = useUiStringsResolved(scope, id, locale)
-  const overridesQuery = useUiStringsOverrides(scope, id, locale)
-  const exportMutation = useExportUiStrings(scope, id, locale)
+  const themes = useMemo<AdminTheme[]>(() => themesQuery.data ?? [], [themesQuery.data])
+  const selectedTheme = useMemo(
+    () => themes.find((theme) => theme.ulid === themeUlid) ?? themes[0] ?? null,
+    [themes, themeUlid],
+  )
+  const themeId: UiStringId | null = selectedTheme
+    ? (selectedTheme.id ?? selectedTheme.ulid)
+    : null
+
+  const id: UiStringId | null = scope === 'brand' ? activeBrand.id : themeId
+  const uiId: UiStringId = id ?? ''
+
+  const resolvedQuery = useUiStringsResolved(scope, id ?? '', locale)
+  const overridesQuery = useUiStringsOverrides(scope, id ?? '', locale)
+  const exportMutation = useExportUiStrings(scope, id ?? '', locale)
 
   const rows = useMemo<StringRow[]>(() => {
     const resolved = resolvedQuery.data ?? {}
@@ -203,6 +226,7 @@ export function LocalizationClient() {
     : rows
 
   async function handleExport() {
+    if (id === null) return
     const result = await exportMutation.mutateAsync()
     if (!result.ok) {
       sileo.error({ title: errorMessage(result.errorCode, result.message) })
@@ -231,18 +255,28 @@ export function LocalizationClient() {
             </button>
           ))}
         </div>
-        {/* {scope === 'theme' && (
+        {scope === 'theme' && (
           <label className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">{t('themeIdLabel')}</span>
-            <Input
-              type="number"
-              min={1}
-              value={themeId}
-              onChange={(e) => setThemeId(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="h-8 w-24"
-            />
+            <select
+              value={selectedTheme?.ulid ?? ''}
+              onChange={(event) => setThemeUlid(event.target.value || null)}
+              className="h-8 max-w-56 rounded-lg border bg-background px-2 text-sm"
+              disabled={themesQuery.isLoading || themes.length === 0}
+            >
+              {themes.length === 0 && (
+                <option value="">
+                  {themesQuery.isLoading ? '…' : t('errors.themeNotFound')}
+                </option>
+              )}
+              {themes.map((theme) => (
+                <option key={theme.ulid} value={theme.ulid}>
+                  {theme.name || theme.slug}
+                </option>
+              ))}
+            </select>
           </label>
-        )} */}
+        )}
         <div className="ms-auto flex gap-1 rounded-md border bg-background p-0.5">
           {UI_STRING_LOCALES.map((l) => (
             <button
@@ -272,8 +306,8 @@ export function LocalizationClient() {
           />
         </div>
         <span className="text-sm text-muted-foreground">{t('count', { count: filtered.length })}</span>
-        <ImportStringsDialog scope={scope} id={id} locale={locale} errorMessage={errorMessage} />
-        <Button type="button" variant="outline" onClick={handleExport} disabled={exportMutation.isPending}>
+        <ImportStringsDialog scope={scope} id={uiId} locale={locale} errorMessage={errorMessage} />
+        <Button type="button" variant="outline" onClick={handleExport} disabled={id === null || exportMutation.isPending}>
           {exportMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -307,7 +341,7 @@ export function LocalizationClient() {
               <UiStringRow
                 key={`${scope}-${id}-${locale}-${item.key}`}
                 scope={scope}
-                id={id}
+                id={uiId}
                 locale={locale}
                 item={item}
                 errorMessage={errorMessage}

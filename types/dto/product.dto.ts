@@ -97,11 +97,11 @@ export const CreateProductSchema = z
         message: 'Invalid delivery method',
       }),
     base_price: z
-      .number({ invalid_type_error: 'Base price must be a number' })
+      .number({ error: 'Base price must be a number' })
       .min(0, 'Base price cannot be negative')
       .max(999999.99, 'Base price exceeds maximum limit'),
     sale_price: z
-      .number({ invalid_type_error: 'Sale price must be a number' })
+      .number({ error: 'Sale price must be a number' })
       .min(0, 'Sale price cannot be negative')
       .max(999999.99, 'Sale price exceeds maximum limit')
       .nullable()
@@ -126,6 +126,9 @@ export const CreateProductSchema = z
     crm_score_on_purchase: z.number().int().min(0).max(10000).nullable().optional(),
     sort_order: z.number().int().min(0).optional(),
     featured: z.boolean().optional(),
+    track_stock: z.boolean().optional(),
+    stock_quantity: z.number().int().min(0).nullable().optional(),
+    allow_backorder: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -171,6 +174,9 @@ export const UpdateProductSchema = z
     crm_score_on_purchase: z.number().int().min(0).max(10000).nullable().optional(),
     sort_order: z.number().int().min(0).optional(),
     featured: z.boolean().optional(),
+    track_stock: z.boolean().optional(),
+    stock_quantity: z.number().int().min(0).nullable().optional(),
+    allow_backorder: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -377,6 +383,9 @@ export const ProductSchema = z.object({
   crm_score_on_purchase: z.number().nullable().optional(),
   sort_order: z.number().optional().default(0),
   featured: z.boolean(),
+  track_stock: z.boolean().optional().default(false),
+  stock_quantity: z.number().nullable().optional(),
+  allow_backorder: z.boolean().optional().default(false),
   name: z.string(),
   one_liner: z.string().nullable(),
   created_at: z.string(),

@@ -73,7 +73,8 @@ export async function sellerFetchClient<T>(
     let payload: unknown
     try {
       payload = JSON.parse(text) as unknown
-    } catch {
+    } catch (err) {
+      console.log(err)
       return apiFailure(
         'Invalid response from server',
         'invalid_response',
@@ -86,7 +87,7 @@ export async function sellerFetchClient<T>(
       return apiFailure(
         envelope.message ?? `Request failed (${response.status})`,
         envelope.error_code ??
-          (response.status === 422 ? 'validation_failed' : 'request_failed'),
+        (response.status === 422 ? 'validation_failed' : 'request_failed'),
         response.status,
         envelope.errors ?? null,
       )
@@ -95,7 +96,7 @@ export async function sellerFetchClient<T>(
     return {
       ok: true,
       data: (envelope.data ?? null) as T,
-      meta: envelope.meta,
+      meta: envelope.meta ? { per_page: envelope.meta.per_page ?? undefined, next_cursor: envelope.meta.next_cursor ?? null, has_more: envelope.meta.has_more ?? false } : undefined,
     }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

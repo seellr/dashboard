@@ -10,9 +10,11 @@ interface UseAutoSaveDraftOptions {
   dirty: boolean
   save: (page: BuilderPage) => Promise<unknown>
   delayMs?: number
+  /** Disable saves while the editor has no server-backed page. */
+  enabled?: boolean
 }
 
-export function useAutoSaveDraft({ page, dirty, save, delayMs = 1000 }: UseAutoSaveDraftOptions) {
+export function useAutoSaveDraft({ page, dirty, save, delayMs = 1000, enabled = true }: UseAutoSaveDraftOptions) {
   const [status, setStatus] = useState<AutoSaveStatus>('idle')
   const [error, setError] = useState<unknown>(null)
   const latestPage = useRef(page)
@@ -40,13 +42,13 @@ export function useAutoSaveDraft({ page, dirty, save, delayMs = 1000 }: UseAutoS
   useEffect(() => { runRef.current = run }, [run])
 
   useEffect(() => {
-    if (!dirty) return
+    if (!enabled || !dirty) return
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => void runRef.current(), delayMs)
     return () => { if (timer.current) clearTimeout(timer.current) }
-  }, [dirty, page, delayMs])
+  }, [dirty, page, delayMs, enabled])
 
-  const retry = useCallback(() => { if (dirty) void runRef.current() }, [dirty])
-  const flush = useCallback(async () => { if (timer.current) clearTimeout(timer.current); await runRef.current() }, [])
+  const retry = useCallback(() => { if (dirty && enabled) void runRef.current() }, [dirty, enabled])
+  const flush = useCallback(async () => { if (!enabled) return; if (timer.current) clearTimeout(timer.current); await runRef.current() }, [enabled])
   return { status, error, retry, flush }
 }

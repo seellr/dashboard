@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   const result = await callSubscriberAuth('/subscriber/auth/register', {
     body: {
       ...parsed.data,
-      email: parsed.data.email.trim().toLowerCase(),
+      email: parsed.data.email?.trim().toLowerCase() ?? null,
     },
     locale: authLocale(request),
   })

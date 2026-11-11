@@ -3,6 +3,7 @@ import { BACKEND_API_URL, backendHeaders } from '@/lib/admin/backend-client'
 import {
   authenticateAdminRequest,
   forwardToBackend,
+  normalizeMediaUrls,
   validationErrorResponse,
 } from '@/lib/admin/server-media-proxy'
 import { MediaSingleResponseSchema, UpdateMediaSchema } from '@/types/dto/media.dto'
@@ -48,6 +49,7 @@ export async function GET(
           { status: 502 },
         )
       }
+      return NextResponse.json(normalizeMediaUrls(data), { status: response.status })
     } catch (e) {
       console.error('[Media Details GET] Failed to parse response:', e)
     }
@@ -108,6 +110,7 @@ export async function PUT(
           { status: 502 },
         )
       }
+      return NextResponse.json(normalizeMediaUrls(data), { status: response.status })
     } catch (e) {
       console.error('[Media PUT] Failed to parse response:', e)
     }

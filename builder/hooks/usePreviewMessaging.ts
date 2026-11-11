@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import type { BuilderPage, Locale, ThemeSchema } from '@/shared/types/builder'
-import { getAllowedOrigins, isAllowedOrigin, isPreviewMessage, PREVIEW_SOURCE, type PreviewToEditorMessage, type EditorToPreviewMessage } from '@/shared/types/preview-protocol'
+import { getAllowedOrigins, isAllowedOrigin, isPreviewMessage, PREVIEW_PROTOCOL_VERSION, PREVIEW_SOURCE, type PreviewToEditorMessage, type EditorToPreviewMessage } from '@/shared/types/preview-protocol'
 
 interface UsePreviewMessagingOptions {
   iframeRef: React.RefObject<HTMLIFrameElement | null>
@@ -38,7 +38,7 @@ export function usePreviewMessaging({ iframeRef, page, schema, locale, selectedS
       onMessage?.(message)
       if (message.type === 'READY') {
         onReadyChange?.(true)
-        send({ source: PREVIEW_SOURCE, type: 'INIT', page: pageRef.current, schema: schemaRef.current, locale: localeRef.current })
+        send({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'INIT', page: pageRef.current, schema: schemaRef.current, themeSettings: {}, locale: localeRef.current })
       }
     }
     window.addEventListener('message', handleMessage)
@@ -48,15 +48,15 @@ export function usePreviewMessaging({ iframeRef, page, schema, locale, selectedS
   useEffect(() => {
     if (!targetOriginRef.current) return
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => send({ source: PREVIEW_SOURCE, type: 'UPDATE_PAGE', page }), 120)
+    timerRef.current = setTimeout(() => send({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'UPDATE_PAGE', page }), 120)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [page, send])
 
   useEffect(() => {
-    if (selectedSectionId !== undefined) send({ source: PREVIEW_SOURCE, type: 'SELECT_SECTION', sectionId: selectedSectionId ?? null })
+    if (selectedSectionId !== undefined) send({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'SELECT_SECTION', sectionId: selectedSectionId ?? null })
   }, [selectedSectionId, send])
 
-  useEffect(() => { send({ source: PREVIEW_SOURCE, type: 'SET_LOCALE', locale }) }, [locale, send])
+  useEffect(() => { send({ source: PREVIEW_SOURCE, v: PREVIEW_PROTOCOL_VERSION, type: 'SET_LOCALE', locale }) }, [locale, send])
 
   const retry = useCallback(() => {
     onReadyChange?.(false)

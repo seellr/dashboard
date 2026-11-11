@@ -3,6 +3,7 @@ import { BACKEND_API_URL, backendMultipartHeaders } from '@/lib/admin/backend-cl
 import {
   authenticateAdminRequest,
   forwardToBackend,
+  normalizeMediaUrls,
   validationErrorResponse,
 } from '@/lib/admin/server-media-proxy'
 import {
@@ -76,11 +77,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     body: formData,
   })
 
-  // Validate response shape on 201/200
+  // Validate response shape on 201/200 and return browser-safe absolute URLs.
   if (response.ok) {
     try {
-      const clone = response.clone()
-      const data = await clone.json()
+      const data = await response.clone().json()
       const parseResult = MediaSingleResponseSchema.safeParse(data)
       if (!parseResult.success) {
         console.error('[Media Upload] Upstream response validation failed:', parseResult.error.format())
@@ -94,6 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 502 },
         )
       }
+      return NextResponse.json(normalizeMediaUrls(data), { status: response.status })
     } catch (e) {
       console.error('[Media Upload] Failed to parse upload response:', e)
     }
