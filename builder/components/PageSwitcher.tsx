@@ -9,6 +9,21 @@ import { useBuilderPages } from '@/builder/hooks/useBuilderData'
 import type { BuilderPage, PageType } from '@/shared/types/builder'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
+/**
+ * Store the page being edited in the query string without triggering a Next.js
+ * navigation (which would remount the editor and reload the draft).
+ */
+function rememberPageUlid(ulid: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    const url = new URL(window.location.href)
+    url.searchParams.set('page', ulid)
+    window.history.replaceState(window.history.state, '', url)
+  } catch {
+    // A blocked history update is not worth failing the page switch over.
+  }
+}
+
 const pages: Array<{ value: PageType; label: string }> = [
   { value: 'home', label: 'Home' },
   { value: 'product', label: 'Product' },
@@ -26,7 +41,7 @@ const pages: Array<{ value: PageType; label: string }> = [
   { value: 'custom', label: 'Custom page' },
 ]
 
-export function PageSwitcher() {
+export function PageSwitcher({ beforeSwitch }: { beforeSwitch?: () => Promise<unknown> }) {
   const locale = useEditorStore((state) => state.locale)
   const page = useEditorStore((state) => state.page)
   const setPage = useEditorStore((state) => state.setPage)
@@ -45,12 +60,20 @@ export function PageSwitcher() {
    * query + effect, which would call setState during render).
    */
   const switchPage = async (match: BuilderPage) => {
-    if (match.sections?.length) {
-      setPage(match)
-      return
-    }
     setSwitching(true)
     try {
+      // Persist pending edits of the current page first, otherwise switching
+      // silently discards anything typed in the last second.
+      if (beforeSwitch) {
+        await beforeSwitch()
+        if (useEditorStore.getState().dirty) return
+      }
+      // Keep the selection in the URL so a reload returns to this page.
+      rememberPageUlid(match.ulid)
+      if (match.sections?.length) {
+        setPage(match)
+        return
+      }
       const draft = await queryClient.fetchQuery({
         queryKey: ['builder-draft', locale, match.ulid],
         queryFn: async () => {

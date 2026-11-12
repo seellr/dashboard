@@ -275,6 +275,7 @@
     "loading": "Loading themes…",
     "empty": "No themes available.",
     "active": "Active theme",
+    "legacy": "Legacy",
     "activate": "Activate",
     "activating": "Activating…",
     "activated": "Theme activated.",

@@ -1,8 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
-import { SellerThemeClient } from '@/components/seller/store/SellerThemeClient'
-import { SellerThemeSettingsClient } from '@/components/seller/store/SellerThemeSettingsClient'
+import { SellerThemeWorkspace } from '@/components/seller/store/SellerThemeWorkspace'
 
 export default async function SellerThemePage({
   params,
@@ -31,8 +30,7 @@ export default async function SellerThemePage({
           </Link>
         </div>
       </div>
-      <SellerThemeSettingsClient />
-      <SellerThemeClient />
+      <SellerThemeWorkspace />
     </div>
   )
 }

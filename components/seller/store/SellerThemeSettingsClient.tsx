@@ -6,12 +6,16 @@ import { Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import type { SettingDefinition } from '@/shared/types/builder'
+import type { SettingDefinition, SettingOption, SettingType } from '@/shared/types/builder'
 import {
   getActiveSellerTheme,
+  getSellerTheme,
   getSellerThemeSchema,
+  getSellerThemeSettings,
   updateSellerThemeSettings,
   type SellerActiveTheme,
+  type SellerTheme,
+  type SellerThemeSetting,
   type SellerThemeSettingInput,
 } from '@/lib/seller/resource-client'
 
@@ -37,6 +41,125 @@ function valueToText(value: unknown): string {
   return ''
 }
 
+/**
+ * `GET /subscriber/theme` (live) does not include saved overrides, so the
+ * settings form must read them from `GET /subscriber/theme/settings`. Tolerate
+ * the shapes we have seen: `{settings:[{key,value}]}`, `{settings:{k:v}}`,
+ * a bare array, or a flat key/value map.
+ */
+function settingsMapFrom(value: unknown): Record<string, string> {
+  const map: Record<string, string> = {}
+
+  const acceptEntry = (entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return
+    const record = entry as Record<string, unknown>
+    if (typeof record.key !== 'string' || !('value' in record)) return
+    map[record.key] = valueToText(record.value)
+  }
+
+  const acceptMap = (record: Record<string, unknown>) => {
+    for (const [key, raw] of Object.entries(record)) {
+      if (
+        key === 'theme' ||
+        key === 'settings' ||
+        key === 'has_unpublished_changes' ||
+        key === 'published_at'
+      ) {
+        continue
+      }
+      if (raw && typeof raw === 'object' && 'value' in (raw as Record<string, unknown>)) {
+        map[key] = valueToText((raw as Record<string, unknown>).value)
+      } else {
+        map[key] = valueToText(raw)
+      }
+    }
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach(acceptEntry)
+    return map
+  }
+  if (!value || typeof value !== 'object') return map
+
+  const record = value as Record<string, unknown>
+  if (Array.isArray(record.settings)) {
+    record.settings.forEach(acceptEntry)
+    return map
+  }
+  if (record.settings && typeof record.settings === 'object') {
+    acceptMap(record.settings as Record<string, unknown>)
+    return map
+  }
+  if (record.data && typeof record.data === 'object' && !Array.isArray(record.data)) {
+    return settingsMapFrom(record.data)
+  }
+  acceptMap(record)
+  return map
+}
+
+const SETTING_TYPE_BY_LABEL: Record<string, SettingType> = {
+  color: 'color',
+  font: 'font',
+  range: 'range',
+  number: 'number',
+  text: 'text',
+  textarea: 'textarea',
+  richtext: 'richtext',
+  toggle: 'toggle',
+  boolean: 'toggle',
+  select: 'select',
+  image: 'image',
+  url: 'url',
+  product: 'product',
+  productlist: 'product_list',
+}
+
+function normalizeTypeToken(value: string): string {
+  return value.toLowerCase().replace(/[\s_-]+/g, '')
+}
+
+function settingTypeFrom(value: SellerThemeSetting['type']): SettingType {
+  if (typeof value === 'string') {
+    return SETTING_TYPE_BY_LABEL[normalizeTypeToken(value)] ?? 'text'
+  }
+  if (value && typeof value === 'object' && typeof value.label === 'string') {
+    return SETTING_TYPE_BY_LABEL[normalizeTypeToken(value.label)] ?? 'text'
+  }
+  return 'text'
+}
+
+function settingOptions(value: SellerThemeSetting['options']): SettingOption[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const options = value
+    .map((option) => {
+      if (typeof option === 'string') return { value: option, label: option }
+      if (!option || typeof option !== 'object') return null
+      const record = option as { value?: unknown; label?: unknown }
+      const optionValue = valueToText(record.value)
+      if (optionValue === '') return null
+      return { value: optionValue, label: valueToText(record.label) || optionValue }
+    })
+    .filter((option): option is SettingOption => option !== null)
+  return options.length > 0 ? options : undefined
+}
+
+/** Legacy themes only expose settings definitions through `GET /themes/{ulid}`. */
+function definitionsFromTheme(theme: SellerTheme): SettingDefinition[] {
+  return (theme.settings ?? []).map((setting) => ({
+    key: setting.key,
+    type: settingTypeFrom(setting.type),
+    label: setting.label ?? setting.key,
+    help: null,
+    default: setting.default_value as SettingDefinition['default'],
+    translatable: false,
+    required: false,
+    min: null,
+    max: null,
+    step: null,
+    options: settingOptions(setting.options),
+  }))
+}
+
 function defaultToText(definition: SettingDefinition): string {
   const value = definition.default
   if (definition.type === 'toggle') return value === true ? '1' : '0'
@@ -48,7 +171,13 @@ function defaultToText(definition: SettingDefinition): string {
   return valueToText(value)
 }
 
-function currentValue(theme: SellerActiveTheme | null, definition: SettingDefinition): string {
+function currentValue(
+  theme: SellerActiveTheme | null,
+  saved: Record<string, string>,
+  definition: SettingDefinition,
+): string {
+  if (definition.key in saved) return saved[definition.key]
+
   const settings = theme?.settings
   if (Array.isArray(settings)) {
     const match = settings.find((setting) => setting.key === definition.key)
@@ -65,11 +194,21 @@ function currentValue(theme: SellerActiveTheme | null, definition: SettingDefini
   return defaultToText(definition)
 }
 
-function buildValues(theme: SellerActiveTheme | null, definitions: SettingDefinition[]): Record<string, string> {
-  return Object.fromEntries(definitions.map((definition) => [definition.key, currentValue(theme, definition)]))
+function buildValues(
+  theme: SellerActiveTheme | null,
+  saved: Record<string, string>,
+  definitions: SettingDefinition[],
+): Record<string, string> {
+  return Object.fromEntries(
+    definitions.map((definition) => [definition.key, currentValue(theme, saved, definition)]),
+  )
 }
 
-export function SellerThemeSettingsClient() {
+export function SellerThemeSettingsClient({
+  revision = 0,
+}: {
+  revision?: number
+} = {}) {
   const t = useTranslations('seller.theme.settings')
   const [theme, setTheme] = useState<SellerActiveTheme | null>(null)
   const [definitions, setDefinitions] = useState<SettingDefinition[]>([])
@@ -86,13 +225,14 @@ export function SellerThemeSettingsClient() {
     setLoading(true)
     setError('')
     setNotActivated(false)
-    const [themeResult, schemaResult] = await Promise.all([
+    const [themeResult, schemaResult, settingsResult] = await Promise.all([
       getActiveSellerTheme(),
       getSellerThemeSchema(),
+      getSellerThemeSettings(),
     ])
-    setLoading(false)
 
     if (!themeResult.ok) {
+      setLoading(false)
       if (themeResult.errorCode === 'theme_not_activated' || themeResult.status === 404) {
         setNotActivated(true)
         setTheme(null)
@@ -103,15 +243,47 @@ export function SellerThemeSettingsClient() {
       return
     }
 
-    const nextDefinitions = schemaResult.ok ? schemaResult.data.settings ?? [] : []
+    const active = themeResult.data
+    if (!active) {
+      setLoading(false)
+      setNotActivated(true)
+      setTheme(null)
+      setDefinitions([])
+      return
+    }
+    const saved = settingsResult.ok ? settingsMapFrom(settingsResult.data) : {}
+    const activeUlid = active.theme?.ulid ?? active.theme_ulid
+    // `/theme/schema` describes the active theme's manifest. If it still points
+    // at another theme (common for legacy themes) its settings do not belong to
+    // the active theme.
+    const schemaThemeUlid = schemaResult.ok ? schemaResult.data.theme?.ulid : undefined
+    const schemaMatchesActive = !schemaThemeUlid || !activeUlid || schemaThemeUlid === activeUlid
+    let nextDefinitions =
+      schemaResult.ok && schemaMatchesActive ? schemaResult.data.settings ?? [] : []
     const nextFonts = schemaResult.ok ? schemaResult.data.fonts ?? [] : []
-    const nextValues = buildValues(themeResult.data, nextDefinitions)
-    setTheme(themeResult.data)
+
+    // Legacy themes have no manifest, so `/theme/schema` may be empty or
+    // unavailable. Their flat settings live on `GET /themes/{ulid}`.
+    if (nextDefinitions.length === 0 && activeUlid) {
+      const detail = await getSellerTheme(activeUlid)
+      if (detail.ok) {
+        nextDefinitions = definitionsFromTheme(detail.data)
+        for (const setting of detail.data.settings ?? []) {
+          if (setting.key in saved) continue
+          const text = valueToText(setting.value)
+          if (text !== '') saved[setting.key] = text
+        }
+      }
+    }
+
+    const nextValues = buildValues(active, saved, nextDefinitions)
+    setLoading(false)
+    setTheme(active)
     setDefinitions(nextDefinitions)
     setFonts(nextFonts)
     setValues(nextValues)
     setInitial(nextValues)
-    if (!schemaResult.ok) setError(schemaResult.message)
+    if (!schemaResult.ok && nextDefinitions.length === 0) setError(schemaResult.message)
   }, [])
 
   useEffect(() => {
@@ -119,7 +291,7 @@ export function SellerThemeSettingsClient() {
       void load()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [load])
+  }, [load, revision])
 
   const dirty = useMemo(
     () => Object.keys(values).some((key) => values[key] !== initial[key]),
@@ -147,8 +319,17 @@ export function SellerThemeSettingsClient() {
       setError(result.message)
       return
     }
-    setTheme(result.data)
-    setInitial(values)
+    if (result.data) setTheme(result.data)
+    // `PUT /subscriber/theme/settings` may echo normalised values back; prefer
+    // them over the local form state when present.
+    const savedFromResponse = settingsMapFrom(result.data)
+    if (Object.keys(savedFromResponse).length > 0) {
+      const nextValues = buildValues(result.data ?? theme, savedFromResponse, definitions)
+      setValues(nextValues)
+      setInitial(nextValues)
+    } else {
+      setInitial(values)
+    }
     setMessage(t('saved'))
   }
 
