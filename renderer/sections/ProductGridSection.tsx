@@ -10,8 +10,9 @@ const GRID_BY_COLUMNS: Record<string, string> = {
 export function ProductGridSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   // Live schema: `heading`, `products` (ULID list), `columns` (2–4).
   const title =
-    settingText(section.settings, 'heading', locale)
-    || settingText(section.settings, 'title', locale, locale === 'ar' ? 'منتجاتنا' : 'Featured products')
+    'heading' in section.settings
+      ? settingText(section.settings, 'heading', locale)
+      : settingText(section.settings, 'title', locale, locale === 'ar' ? 'منتجاتنا' : 'Featured products')
   const columns = String(section.settings.columns ?? 3)
   const columnClass = GRID_BY_COLUMNS[columns] ?? GRID_BY_COLUMNS['3']
   const products = Array.isArray(section.settings.products) ? section.settings.products : []

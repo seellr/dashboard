@@ -255,7 +255,7 @@ export const PROXY_RULES: readonly ProxyRule[] = [
   },
   {
     id: 'theme-settings',
-    methods: ['PUT'],
+    methods: ['GET', 'PUT'],
     pattern: /^theme\/settings$/,
     access: 'subscriber',
     target: () => '/subscriber/theme/settings',

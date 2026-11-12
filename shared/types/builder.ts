@@ -129,6 +129,8 @@ export interface ThemeRuntimeSettings {
 }
 
 export interface BlockInstance {
+  /** Backend ULID; absent for blocks created in the editor before the first save. */
+  ulid?: string
   id: string
   type: string
   settings: Record<string, SettingValue>
@@ -136,6 +138,8 @@ export interface BlockInstance {
 }
 
 export interface SectionInstance {
+  /** Backend ULID; absent for sections created in the editor before the first save. */
+  ulid?: string
   id: string
   type: string
   settings: Record<string, SettingValue>

@@ -8,9 +8,12 @@ export function settingString(settings: Record<string, SettingValue | LocalizedV
 
 export function settingText(settings: Record<string, SettingValue | LocalizedValue>, key: string, locale: Locale, fallback = ''): string {
   const value = settings[key]
-  if (typeof value === 'object' && value !== null && 'ar' in value && 'en' in value) {
-    const localized = value as LocalizedValue
-    return localized[locale] || fallback
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    // Tolerate partial localized objects (`{ar}` / `{en}`) returned by the API.
+    const localized = value as Partial<Record<Locale, unknown>>
+    const text = localized[locale]
+    if (typeof text === 'string') return text
   }
-  return typeof value === 'string' ? value : fallback
+  return fallback
 }

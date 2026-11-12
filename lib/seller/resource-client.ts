@@ -108,6 +108,11 @@ export interface SellerTheme {
   slug?: string | null
   preview_url?: string | null
   description?: string | null
+  status?: EnumValue
+  version?: string | null
+  /** Page-builder themes ship a manifest; legacy themes only have flat settings. */
+  has_manifest?: boolean
+  settings?: SellerThemeSetting[]
   is_active?: boolean
 }
 
@@ -321,6 +326,14 @@ export async function getSellerTheme(ulid: string) {
 }
 export async function getActiveSellerTheme() {
   return sellerFetchClient<SellerActiveTheme | null>('/theme')
+}
+/**
+ * Live backend exposes `GET /subscriber/theme/settings` (undocumented in
+ * All.md). It is the only way to read saved overrides: the live
+ * `GET /subscriber/theme` returns the theme descriptor without `settings`.
+ */
+export async function getSellerThemeSettings() {
+  return sellerFetchClient<unknown>('/theme/settings')
 }
 export async function getSellerThemeSchema() {
   return sellerFetchClient<ThemeSchema>('/theme/schema')

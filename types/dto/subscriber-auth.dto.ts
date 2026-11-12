@@ -24,6 +24,11 @@ const passwordSchema = z.string({ error: 'required' })
 
 export const SubscriberUserSchema = z.object({
   ulid: z.string().length(26),
+  // `POST /subscriber/auth/login` returns `user.name` + `user.profile`, while
+  // `GET /subscriber/auth/me` returns `first_name` / `last_name`. Accept both
+  // shapes instead of dropping the login variant during parsing.
+  name: z.string().nullish(),
+  profile: z.unknown().nullish(),
   first_name: z.string().nullish(),
   last_name: z.string().nullish(),
   phone: z.string().nullish(),

@@ -45,21 +45,17 @@ export function HeaderSection({ section, locale }: { section: SectionInstance; l
     </span>
   )
 
-  const navLinks = links.length > 0
-    ? links.map((link) => (
-        <a
-          key={link.id}
-          href={settingString(link.settings, 'url', '/')}
-          className="hover:text-foreground"
-        >
-          {settingText(link.settings, 'label', locale, locale === 'ar' ? 'رابط' : 'Link')}
-        </a>
-      ))
-    : [
-        <span key="home" className="text-foreground">{ar ? 'الرئيسية' : 'Home'}</span>,
-        <span key="shop">{ar ? 'المتجر' : 'Shop'}</span>,
-        <span key="about">{ar ? 'عن المتجر' : 'About'}</span>,
-      ]
+  // Only real links are rendered: the old fallback invented Home/Shop/About
+  // entries that could not be edited or saved.
+  const navLinks = links.map((link) => (
+    <a
+      key={link.id}
+      href={settingString(link.settings, 'url', '/')}
+      className="hover:text-foreground"
+    >
+      {settingText(link.settings, 'label', locale)}
+    </a>
+  ))
 
   return (
     <header className={`${sticky ? 'sticky top-0' : 'relative'} z-30 border-b border-border/70 bg-background/95 px-6 py-4 shadow-sm backdrop-blur-md`}>
