@@ -12,11 +12,21 @@ import { SellerThemeSettingsClient } from './SellerThemeSettingsClient'
  */
 export function SellerThemeWorkspace() {
   const [revision, setRevision] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
-    <>
-      <SellerThemeSettingsClient revision={revision} />
-      <SellerThemeClient onThemeActivated={() => setRevision((value) => value + 1)} />
-    </>
+    <div className="space-y-6">
+      <SellerThemeSettingsClient
+        revision={revision}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onSaved={() => setRevision((value) => value + 1)}
+      />
+      <SellerThemeClient
+        revision={revision}
+        onThemeActivated={() => setRevision((value) => value + 1)}
+        onEditSettings={() => setSettingsOpen(true)}
+      />
+    </div>
   )
 }

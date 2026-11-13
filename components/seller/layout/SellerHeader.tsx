@@ -26,7 +26,10 @@ function PageTitle({ locale }: { locale: string }) {
     .replace(`/${locale}/seller`, '')
     .split('/')
     .filter(Boolean)
-  const pageKey = segments[0]
+  // Route segments don't always match the message keys (`theme-builder` is
+  // `nav.pageBuilder`); without the alias next-intl logs MISSING_MESSAGE.
+  const segment = segments[0]
+  const pageKey = segment === 'theme-builder' ? 'pageBuilder' : segment
 
   const label = pageKey
     ? t(`nav.${pageKey}`, {

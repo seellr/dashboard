@@ -281,6 +281,8 @@
     "activated": "تم تفعيل الثيم.",
     "confirmActivate": "تفعيل {name}؟",
     "loadMore": "تحميل المزيد",
+    "editSettings": "تعديل الإعدادات",
+    "activeTheme": "القالب النشط",
     "settings": {
       "title": "إعدادات القالب",
       "description": "خصّص الألوان والخطوط والخيارات المستخدمة في {theme}.",
@@ -290,7 +292,9 @@
       "save": "حفظ الإعدادات",
       "saving": "جارٍ الحفظ…",
       "saved": "تم حفظ إعدادات القالب.",
-      "unpublished": "تغييرات غير منشورة"
+      "unpublished": "تغييرات غير منشورة",
+      "editSettings": "تعديل الإعدادات",
+      "close": "إغلاق"
     },
     "strings": {
       "title": "نصوص الواجهة",
