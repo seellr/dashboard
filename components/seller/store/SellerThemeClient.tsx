@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, Palette } from 'lucide-react'
+import { Check, Palette, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   activateSellerTheme,
@@ -11,9 +11,66 @@ import {
   listSellerThemes,
   type SellerActiveTheme,
   type SellerTheme,
+  type SellerThemeDescriptor,
 } from '@/lib/seller/resource-client'
 
-export function SellerThemeClient() {
+function descriptorFromTheme(theme: SellerTheme): SellerThemeDescriptor {
+  return {
+    ulid: theme.ulid,
+    handle: theme.slug ?? '',
+    name: theme.name ?? theme.slug ?? theme.ulid,
+    version: theme.version ?? null,
+  }
+}
+
+function activeDescriptor(theme: SellerActiveTheme | null): SellerThemeDescriptor | null {
+  if (!theme) return null
+  if (theme.theme?.ulid) return theme.theme
+  if (theme.theme_ulid) {
+    const name =
+      typeof theme.theme_name === 'string'
+        ? theme.theme_name
+        : theme.theme_name?.en ?? theme.theme_name?.ar ?? theme.theme_ulid
+    return { ulid: theme.theme_ulid, handle: '', name }
+  }
+  // Some responses return the descriptor directly instead of wrapping it.
+  const direct = theme as unknown as Partial<SellerThemeDescriptor> & { slug?: string }
+  if (typeof direct.ulid === 'string') {
+    return {
+      ulid: direct.ulid,
+      handle: direct.handle ?? direct.slug ?? '',
+      name: direct.name ?? direct.slug ?? direct.ulid,
+      version: direct.version ?? null,
+    }
+  }
+  return null
+}
+
+/**
+ * `POST /subscriber/theme/activate` has been seen returning `{theme}`, the
+ * legacy `{theme_ulid, theme_name}` shape, a bare descriptor, or no body.
+ * Normalise all of them so the active card can be highlighted immediately.
+ */
+function normalizeActivation(
+  data: SellerActiveTheme | null,
+  fallback: SellerTheme,
+): SellerActiveTheme {
+  const normalized = activeDescriptor(data)
+  if (normalized) {
+    return { ...(data ?? {}), theme: normalized }
+  }
+  return { ...(data ?? {}), theme: descriptorFromTheme(fallback) }
+}
+
+export function SellerThemeClient({
+  revision = 0,
+  onThemeActivated,
+  onEditSettings,
+}: {
+  revision?: number
+  onThemeActivated?: () => void
+  onEditSettings?: () => void
+} = {}) {
   const t = useTranslations('seller.theme')
   const [items, setItems] = useState<SellerTheme[]>([])
   const [active, setActive] = useState<SellerActiveTheme | null>(null)
@@ -48,7 +105,7 @@ export function SellerThemeClient() {
       })
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [load])
+  }, [load, revision])
 
   const activate = async (theme: SellerTheme) => {
     if (!window.confirm(t('confirmActivate', { name: theme.name ?? theme.slug ?? theme.ulid })))
@@ -61,14 +118,24 @@ export function SellerThemeClient() {
       setMessage(result.message)
       return
     }
-    setActive(result.data)
+
+    setActive(normalizeActivation(result.data, theme))
     setItems((current) =>
       current.map((item) => ({ ...item, is_active: item.ulid === theme.ulid })),
     )
     setMessage(t('activated'))
+    onThemeActivated?.()
+
+    // The activate response may omit `published_at` / unpublished state, and a
+    // legacy backend may omit the descriptor entirely. Re-read the canonical
+    // active theme without blocking the optimistic UI.
+    void getActiveSellerTheme().then((fresh) => {
+      if (fresh.ok && fresh.data) setActive(fresh.data)
+    })
   }
 
-  const activeUlid = active?.theme?.ulid ?? active?.theme_ulid ?? items.find((item) => item.is_active)?.ulid
+  const activeUlid =
+    activeDescriptor(active)?.ulid ?? items.find((item) => item.is_active)?.ulid
 
   return (
     <section className="space-y-4">
@@ -104,9 +171,19 @@ export function SellerThemeClient() {
                 )}
                 <div className="space-y-3 p-4">
                   <div>
-                    <h2 className="font-medium">
-                      {theme.name ?? theme.slug ?? theme.ulid}
-                    </h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="font-medium">
+                        {theme.name ?? theme.slug ?? theme.ulid}
+                      </h2>
+                      {theme.has_manifest === false && (
+                        <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {t('legacy')}
+                        </span>
+                      )}
+                      {theme.version && (
+                        <span className="text-[11px] text-muted-foreground">v{theme.version}</span>
+                      )}
+                    </div>
                     {theme.description && (
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                         {theme.description}
@@ -114,10 +191,23 @@ export function SellerThemeClient() {
                     )}
                   </div>
                   {isActive ? (
-                    <p className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      <Check className="size-4" aria-hidden="true" />
-                      {t('active')}
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <Check className="size-4" aria-hidden="true" />
+                        {t('active')}
+                      </p>
+                      {onEditSettings && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onEditSettings}
+                          className="gap-1.5"
+                        >
+                          <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+                          {t('editSettings')}
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <Button
                       disabled={busy === theme.ulid}

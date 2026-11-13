@@ -13,6 +13,7 @@ import {
 } from '@/lib/seller/resource-client'
 
 interface SellerAccount {
+  name?: string | null
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -87,7 +88,7 @@ export function SellerSettingsClient() {
   }
 
   const name =
-    [account.first_name, account.last_name].filter(Boolean).join(' ') || '—'
+    [account.first_name, account.last_name].filter(Boolean).join(' ') || account.name || '—'
 
   return (
     <div className="max-w-xl space-y-5 rounded-lg border p-5">

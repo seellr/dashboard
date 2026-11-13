@@ -18,6 +18,15 @@ import { StatsSection } from './sections/StatsSection'
 import { LogoCloudSection } from './sections/LogoCloudSection'
 import { NewsletterSection } from './sections/NewsletterSection'
 import { SpacerSection } from './sections/SpacerSection'
+import {
+  AccountDashboardSection,
+  CartItemsSection,
+  CountdownSection,
+  FeaturedProductSection,
+  NotFoundMessageSection,
+  OfferHeroSection,
+  ThankYouMessageSection,
+} from './sections/CommerceSections'
 import { SectionFallback } from './SectionFallback'
 
 export interface SectionComponentProps { section: SectionInstance; locale: Locale }
@@ -42,6 +51,13 @@ export const sectionRegistry: Record<string, ComponentType<SectionComponentProps
   logo_cloud: LogoCloudSection,
   newsletter: NewsletterSection,
   spacer: SpacerSection,
+  featured_product: FeaturedProductSection,
+  cart_items: CartItemsSection,
+  account_dashboard: AccountDashboardSection,
+  offer_hero: OfferHeroSection,
+  countdown: CountdownSection,
+  thank_you_message: ThankYouMessageSection,
+  not_found_message: NotFoundMessageSection,
 }
 
 export function getSectionComponent(type: string): ComponentType<SectionComponentProps> {

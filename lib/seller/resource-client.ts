@@ -108,6 +108,11 @@ export interface SellerTheme {
   slug?: string | null
   preview_url?: string | null
   description?: string | null
+  status?: EnumValue
+  version?: string | null
+  /** Page-builder themes ship a manifest; legacy themes only have flat settings. */
+  has_manifest?: boolean
+  settings?: SellerThemeSetting[]
   is_active?: boolean
 }
 
@@ -322,6 +327,14 @@ export async function getSellerTheme(ulid: string) {
 export async function getActiveSellerTheme() {
   return sellerFetchClient<SellerActiveTheme | null>('/theme')
 }
+/**
+ * Live backend exposes `GET /subscriber/theme/settings` (undocumented in
+ * All.md). It is the only way to read saved overrides: the live
+ * `GET /subscriber/theme` returns the theme descriptor without `settings`.
+ */
+export async function getSellerThemeSettings() {
+  return sellerFetchClient<unknown>('/theme/settings')
+}
 export async function getSellerThemeSchema() {
   return sellerFetchClient<ThemeSchema>('/theme/schema')
 }
@@ -331,10 +344,16 @@ export async function activateSellerTheme(theme_ulid: string) {
     body: JSON.stringify({ theme_ulid }),
   })
 }
-export async function updateSellerThemeSettings(settings: SellerThemeSettingInput[]) {
+export async function updateSellerThemeSettings(
+  settings: Record<string, unknown> | SellerThemeSettingInput[],
+) {
+  const payload = Array.isArray(settings)
+    ? settings
+    : Object.entries(settings).map(([key, value]) => ({ key, value }))
+
   return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
     method: 'PUT',
-    body: JSON.stringify({ settings }),
+    body: JSON.stringify({ settings: payload }),
   })
 }
 export async function getSellerTenant() {

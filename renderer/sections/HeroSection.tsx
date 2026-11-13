@@ -42,13 +42,17 @@ function heroPadding(height: string): string {
 
 export function HeroSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   // The live schema uses `heading` / `subheading`; older themes used
-  // `title` / `subtitle`. Read the schema keys first.
+  // `title` / `subtitle`. Read the schema keys first, and only fall back to the
+  // legacy keys when they are actually missing (an explicitly cleared heading
+  // must stay empty rather than reverting to the default copy).
   const title =
-    settingText(section.settings, 'heading', locale)
-    || settingText(section.settings, 'title', locale, locale === 'ar' ? 'مرحبًا بك' : 'Welcome')
+    'heading' in section.settings
+      ? settingText(section.settings, 'heading', locale)
+      : settingText(section.settings, 'title', locale, locale === 'ar' ? 'مرحبًا بك' : 'Welcome')
   const subtitle =
-    settingText(section.settings, 'subheading', locale)
-    || settingText(section.settings, 'subtitle', locale)
+    'subheading' in section.settings
+      ? settingText(section.settings, 'subheading', locale)
+      : settingText(section.settings, 'subtitle', locale)
   const background = settingString(section.settings, 'background_color', 'var(--theme-primary)')
   const image = resolveMediaUrl(readImageUrl(section.settings))
   const padded = heroPadding(settingString(section.settings, 'height', 'md'))
@@ -74,9 +78,9 @@ export function HeroSection({ section, locale }: { section: SectionInstance; loc
         </span>
         <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl">{title}</h1>
         {subtitle && <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/65">{subtitle}</p>}
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
-          {buttons.length > 0 ? (
-            buttons.map((button) => {
+        {buttons.length > 0 && (
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            {buttons.map((button) => {
               const url = settingString(button.settings, 'url', '#')
               return (
                 <a
@@ -84,16 +88,12 @@ export function HeroSection({ section, locale }: { section: SectionInstance; loc
                   href={url}
                   className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white/90"
                 >
-                  {settingText(button.settings, 'label', locale, locale === 'ar' ? 'تسوق الآن' : 'Shop now')}
+                  {settingText(button.settings, 'label', locale)}
                 </a>
               )
-            })
-          ) : (
-            <span className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950">
-              {locale === 'ar' ? 'استكشف المنتجات' : 'Explore products'}
-            </span>
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
     </section>
   )

@@ -49,6 +49,10 @@ export function useAutoSaveDraft({ page, dirty, save, delayMs = 1000, enabled = 
   }, [dirty, page, delayMs, enabled])
 
   const retry = useCallback(() => { if (dirty && enabled) void runRef.current() }, [dirty, enabled])
-  const flush = useCallback(async () => { if (!enabled) return; if (timer.current) clearTimeout(timer.current); await runRef.current() }, [enabled])
+  const flush = useCallback(async () => {
+    if (!enabled || !dirty) return
+    if (timer.current) clearTimeout(timer.current)
+    await runRef.current()
+  }, [dirty, enabled])
   return { status, error, retry, flush }
 }
