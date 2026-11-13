@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, Palette } from 'lucide-react'
+import { Check, Palette, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   activateSellerTheme,
@@ -63,9 +63,13 @@ function normalizeActivation(
 }
 
 export function SellerThemeClient({
+  revision = 0,
   onThemeActivated,
+  onEditSettings,
 }: {
+  revision?: number
   onThemeActivated?: () => void
+  onEditSettings?: () => void
 } = {}) {
   const t = useTranslations('seller.theme')
   const [items, setItems] = useState<SellerTheme[]>([])
@@ -101,7 +105,7 @@ export function SellerThemeClient({
       })
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [load])
+  }, [load, revision])
 
   const activate = async (theme: SellerTheme) => {
     if (!window.confirm(t('confirmActivate', { name: theme.name ?? theme.slug ?? theme.ulid })))
@@ -187,10 +191,23 @@ export function SellerThemeClient({
                     )}
                   </div>
                   {isActive ? (
-                    <p className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      <Check className="size-4" aria-hidden="true" />
-                      {t('active')}
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <Check className="size-4" aria-hidden="true" />
+                        {t('active')}
+                      </p>
+                      {onEditSettings && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onEditSettings}
+                          className="gap-1.5"
+                        >
+                          <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+                          {t('editSettings')}
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <Button
                       disabled={busy === theme.ulid}

@@ -2,10 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Save } from 'lucide-react'
+import { Save, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import type { SettingDefinition, SettingOption, SettingType } from '@/shared/types/builder'
 import {
   getActiveSellerTheme,
@@ -16,7 +24,6 @@ import {
   type SellerActiveTheme,
   type SellerTheme,
   type SellerThemeSetting,
-  type SellerThemeSettingInput,
 } from '@/lib/seller/resource-client'
 
 const TRUTHY = new Set(['1', 'true', 'on', 'yes'])
@@ -171,6 +178,46 @@ function defaultToText(definition: SettingDefinition): string {
   return valueToText(value)
 }
 
+function serializeSettingValue(definition: SettingDefinition, raw: string): unknown {
+  if (definition.type === 'range') {
+    const trimmed = raw.trim()
+    if (trimmed === '') {
+      if (typeof definition.default === 'number') return definition.default
+      if (definition.min != null) return definition.min
+      return 0
+    }
+    const num = Number(trimmed)
+    if (Number.isFinite(num)) {
+      if (definition.min != null && num < definition.min) return definition.min
+      if (definition.max != null && num > definition.max) return definition.max
+      return num
+    }
+    return definition.min ?? 0
+  }
+
+  if (definition.type === 'number') {
+    const trimmed = raw.trim()
+    if (trimmed === '') {
+      if (typeof definition.default === 'number') return definition.default
+      if (definition.required) return definition.min ?? 0
+      return null
+    }
+    const num = Number(trimmed)
+    return Number.isFinite(num) ? num : (definition.min ?? 0)
+  }
+
+  if (definition.type === 'toggle') {
+    return TRUTHY.has(raw.toLowerCase())
+  }
+
+  if (definition.type === 'image' || definition.type === 'product') {
+    const trimmed = raw.trim()
+    return trimmed === '' ? null : trimmed
+  }
+
+  return raw
+}
+
 function currentValue(
   theme: SellerActiveTheme | null,
   saved: Record<string, string>,
@@ -204,12 +251,36 @@ function buildValues(
   )
 }
 
+export interface SellerThemeSettingsClientProps {
+  revision?: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  onSaved?: (theme: SellerActiveTheme) => void
+  showCard?: boolean
+}
+
 export function SellerThemeSettingsClient({
   revision = 0,
-}: {
-  revision?: number
-} = {}) {
+  open,
+  onOpenChange,
+  onSaved,
+  showCard = true,
+}: SellerThemeSettingsClientProps = {}) {
   const t = useTranslations('seller.theme.settings')
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = open !== undefined
+  const isOpen = isControlled ? open : internalOpen
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(nextOpen)
+      }
+      onOpenChange?.(nextOpen)
+    },
+    [isControlled, onOpenChange],
+  )
+
   const [theme, setTheme] = useState<SellerActiveTheme | null>(null)
   const [definitions, setDefinitions] = useState<SettingDefinition[]>([])
   const [fonts, setFonts] = useState<string[]>([])
@@ -219,11 +290,13 @@ export function SellerThemeSettingsClient({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [notActivated, setNotActivated] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
+    setFieldErrors({})
     setNotActivated(false)
     const [themeResult, schemaResult, settingsResult] = await Promise.all([
       getActiveSellerTheme(),
@@ -302,6 +375,12 @@ export function SellerThemeSettingsClient({
     setValues((current) => ({ ...current, [key]: value }))
     setMessage('')
     setError('')
+    setFieldErrors((current) => {
+      if (!(key in current)) return current
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
   }
 
   const save = async () => {
@@ -309,16 +388,33 @@ export function SellerThemeSettingsClient({
     setSaving(true)
     setMessage('')
     setError('')
-    const settings: SellerThemeSettingInput[] = definitions.map((definition) => ({
-      key: definition.key,
-      value: values[definition.key] ?? '',
-    }))
-    const result = await updateSellerThemeSettings(settings)
+    setFieldErrors({})
+
+    const settingsMap: Record<string, unknown> = {}
+    for (const definition of definitions) {
+      settingsMap[definition.key] = serializeSettingValue(
+        definition,
+        values[definition.key] ?? '',
+      )
+    }
+
+    const result = await updateSellerThemeSettings(settingsMap)
     setSaving(false)
     if (!result.ok) {
       setError(result.message)
+      if (result.errors) {
+        const nextFieldErrors: Record<string, string> = {}
+        for (const [k, errs] of Object.entries(result.errors)) {
+          const fieldKey = k.startsWith('settings.') ? k.replace('settings.', '') : k
+          if (Array.isArray(errs) && errs.length > 0) {
+            nextFieldErrors[fieldKey] = errs[0]
+          }
+        }
+        setFieldErrors(nextFieldErrors)
+      }
       return
     }
+
     if (result.data) setTheme(result.data)
     // `PUT /subscriber/theme/settings` may echo normalised values back; prefer
     // them over the local form state when present.
@@ -331,111 +427,184 @@ export function SellerThemeSettingsClient({
       setInitial(values)
     }
     setMessage(t('saved'))
+    if (result.data) {
+      onSaved?.(result.data)
+    } else if (theme) {
+      onSaved?.(theme)
+    }
   }
 
-  if (loading) {
-    return <p className="text-sm text-muted-foreground">{t('loading')}</p>
-  }
-
-  if (notActivated || (!theme && !error)) {
-    return <p className="text-sm text-muted-foreground">{t('noActiveTheme')}</p>
-  }
-
-  if (error && !theme) {
-    return <p className="text-sm text-destructive">{error}</p>
-  }
-
-  if (!theme) {
-    return <p className="text-sm text-muted-foreground">{t('noActiveTheme')}</p>
-  }
-
-  return (
-    <section className="space-y-4 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-medium">{t('title')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('description', { theme: themeName(theme) || '—' })}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {theme.theme?.version && (
-            <span className="rounded-full border px-2 py-0.5 text-muted-foreground">v{theme.theme.version}</span>
+  const card = showCard ? (
+    <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-xs">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex size-2 rounded-full bg-emerald-500" />
+          <h2 className="font-semibold">{theme ? themeName(theme) : t('title')}</h2>
+          {theme?.theme?.version && (
+            <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+              v{theme.theme.version}
+            </span>
           )}
-          {theme.has_unpublished_changes && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+          {theme?.has_unpublished_changes && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
               {t('unpublished')}
             </span>
           )}
         </div>
+        <p className="text-sm text-muted-foreground">
+          {theme ? t('description', { theme: themeName(theme) || '—' }) : t('loading')}
+        </p>
       </div>
 
-      {message && (
-        <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      {definitions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('empty')}</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {definitions.map((definition) => (
-            <ThemeSettingField
-              key={definition.key}
-              definition={definition}
-              value={values[definition.key] ?? ''}
-              fonts={fonts}
-              onChange={(value) => updateValue(definition.key, value)}
-            />
-          ))}
-        </div>
-      )}
-
       <Button
+        variant="outline"
+        onClick={() => handleOpenChange(true)}
+        disabled={loading || notActivated || !theme}
         className="gap-2"
-        disabled={saving || definitions.length === 0 || !dirty}
-        onClick={() => void save()}
       >
-        <Save className="size-4" />
-        {saving ? t('saving') : t('save')}
+        <SlidersHorizontal className="size-4" />
+        {t('editSettings')}
       </Button>
     </section>
+  ) : null
+
+  return (
+    <>
+      {card}
+
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle>{t('title')}</DialogTitle>
+            <DialogDescription>
+              {theme ? t('description', { theme: themeName(theme) || '—' }) : ''}
+            </DialogDescription>
+            {theme && (
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                {theme.theme?.version && (
+                  <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
+                    v{theme.theme.version}
+                  </span>
+                )}
+                {theme.has_unpublished_changes && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                    {t('unpublished')}
+                  </span>
+                )}
+              </div>
+            )}
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {message && (
+              <div
+                role="status"
+                className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-600 dark:text-emerald-400"
+              >
+                {message}
+              </div>
+            )}
+            {error && (
+              <div
+                role="alert"
+                className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                {error}
+              </div>
+            )}
+
+            {loading ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">{t('loading')}</p>
+            ) : notActivated || (!theme && !error) ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">{t('noActiveTheme')}</p>
+            ) : definitions.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">{t('empty')}</p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {definitions.map((definition) => (
+                  <ThemeSettingField
+                    key={definition.key}
+                    definition={definition}
+                    value={values[definition.key] ?? ''}
+                    fonts={fonts}
+                    error={fieldErrors[definition.key]}
+                    onChange={(value) => updateValue(definition.key, value)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex items-center justify-between sm:justify-between m-0 rounded-none">
+            <Button
+              variant="outline"
+              type="button"
+              disabled={saving}
+              onClick={() => handleOpenChange(false)}
+            >
+              {t('close')}
+            </Button>
+            <Button
+              type="button"
+              className="gap-2"
+              disabled={saving || definitions.length === 0 || !dirty}
+              onClick={() => void save()}
+            >
+              <Save className="size-4" />
+              {saving ? t('saving') : t('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
+
+export const SellerThemeSettingsDialog = SellerThemeSettingsClient
 
 function ThemeSettingField({
   definition,
   value,
   fonts,
+  error,
   onChange,
 }: {
   definition: SettingDefinition
   value: string
   fonts: string[]
+  error?: string
   onChange: (value: string) => void
 }) {
   const id = `theme-setting-${definition.key}`
   const label = definition.label || definition.key
-  const help = definition.help ? <p className="text-xs text-muted-foreground">{definition.help}</p> : null
+  const help = definition.help ? (
+    <p className="text-xs text-muted-foreground">{definition.help}</p>
+  ) : null
+  const errorMsg = error ? (
+    <p className="text-xs text-destructive">{error}</p>
+  ) : null
 
   if (definition.type === 'toggle') {
     return (
-      <label htmlFor={id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm">
-        <span className="font-medium">{label}</span>
-        <input
-          id={id}
-          type="checkbox"
-          checked={TRUTHY.has(value.toLowerCase())}
-          onChange={(event) => onChange(event.target.checked ? '1' : '0')}
-          className="size-4 accent-primary"
-        />
-      </label>
+      <div className="space-y-1">
+        <label
+          htmlFor={id}
+          className={`flex items-center justify-between gap-3 rounded-md border p-3 text-sm ${
+            error ? 'border-destructive' : ''
+          }`}
+        >
+          <span className="font-medium">{label}</span>
+          <input
+            id={id}
+            type="checkbox"
+            checked={TRUTHY.has(value.toLowerCase())}
+            onChange={(event) => onChange(event.target.checked ? '1' : '0')}
+            className="size-4 accent-primary"
+          />
+        </label>
+        {help}
+        {errorMsg}
+      </div>
     )
   }
 
@@ -454,9 +623,16 @@ function ThemeSettingField({
             onChange={(event) => onChange(event.target.value)}
             className="h-8 w-12 cursor-pointer rounded border bg-background"
           />
-          <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder="#000000" maxLength={500} />
+          <Input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="#000000"
+            maxLength={500}
+            className={error ? 'border-destructive' : ''}
+          />
         </div>
         {help}
+        {errorMsg}
       </div>
     )
   }
@@ -474,7 +650,9 @@ function ThemeSettingField({
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-8 w-full rounded-lg border bg-background px-2 text-sm"
+          className={`h-8 w-full rounded-lg border bg-background px-2 text-sm ${
+            error ? 'border-destructive' : ''
+          }`}
         >
           {value === '' && <option value="">—</option>}
           {options.map((option) => (
@@ -484,6 +662,7 @@ function ThemeSettingField({
           ))}
         </select>
         {help}
+        {errorMsg}
       </div>
     )
   }
@@ -517,10 +696,11 @@ function ThemeSettingField({
             step={step}
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="w-20"
+            className={`w-20 ${error ? 'border-destructive' : ''}`}
           />
         </div>
         {help}
+        {errorMsg}
       </div>
     )
   }
@@ -539,20 +719,30 @@ function ThemeSettingField({
           step={definition.step ?? 1}
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          className={error ? 'border-destructive' : ''}
         />
         {help}
+        {errorMsg}
       </div>
     )
   }
 
   if (definition.type === 'textarea' || definition.type === 'richtext') {
     return (
-      <div className="space-y-1 md:col-span-2">
+      <div className="space-y-1 sm:col-span-2">
         <label htmlFor={id} className="text-sm font-medium">
           {label}
         </label>
-        <Textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} rows={3} maxLength={10000} />
+        <Textarea
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          rows={3}
+          maxLength={10000}
+          className={error ? 'border-destructive' : ''}
+        />
         {help}
+        {errorMsg}
       </div>
     )
   }
@@ -568,8 +758,10 @@ function ThemeSettingField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         maxLength={2000}
+        className={error ? 'border-destructive' : ''}
       />
       {help}
+      {errorMsg}
     </div>
   )
 }

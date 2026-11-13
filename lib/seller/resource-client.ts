@@ -344,10 +344,16 @@ export async function activateSellerTheme(theme_ulid: string) {
     body: JSON.stringify({ theme_ulid }),
   })
 }
-export async function updateSellerThemeSettings(settings: SellerThemeSettingInput[]) {
+export async function updateSellerThemeSettings(
+  settings: Record<string, unknown> | SellerThemeSettingInput[],
+) {
+  const payload = Array.isArray(settings)
+    ? Object.fromEntries(settings.map((item) => [item.key, item.value]))
+    : settings
+
   return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
     method: 'PUT',
-    body: JSON.stringify({ settings }),
+    body: JSON.stringify({ settings: payload }),
   })
 }
 export async function getSellerTenant() {

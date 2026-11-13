@@ -97,9 +97,6 @@ export function EditorShell() {
   const saveDraft = useCallback(
     async (latestPage: typeof page) => {
       const response = await subscriberThemeApi.saveDraft(locale, latestPage.ulid, latestPage)
-      // Newly added sections only receive their ULID from the server. Sync the
-      // returned draft so the next save updates them instead of recreating
-      // them, while keeping the user's current selection.
       const parsed = builderPageSchema.safeParse(response.data)
       // Server-assigned ULIDs are needed for newly added sections *and* newly
       // added blocks. Syncing only on new sections meant a new FAQ/testimonial
