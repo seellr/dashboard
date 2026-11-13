@@ -348,8 +348,8 @@ export async function updateSellerThemeSettings(
   settings: Record<string, unknown> | SellerThemeSettingInput[],
 ) {
   const payload = Array.isArray(settings)
-    ? Object.fromEntries(settings.map((item) => [item.key, item.value]))
-    : settings
+    ? settings
+    : Object.entries(settings).map(([key, value]) => ({ key, value }))
 
   return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
     method: 'PUT',
