@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import { HexColorPicker } from 'react-colorful'
-import { ImageIcon } from 'lucide-react'
+import { ImageIcon, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -258,35 +259,16 @@ function SettingField({ definition, locale, form, fonts, products, onChooseImage
   }
 
   if (definition.type === 'image') {
-    const value = form.watch(name)
-    const previewUrl = typeof value === 'string' ? resolveMediaUrl(value) : ''
     return (
-      <div className="grid gap-2">
-        <Label>{label}</Label>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onChooseImage} className="flex-1 justify-start gap-2">
-            <ImageIcon className="size-4" />
-            {typeof value === 'string' && value ? 'Replace image' : 'Choose image'}
-          </Button>
-          {typeof value === 'string' && value ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                form.setValue(name, '', { shouldDirty: true })
-                onCommit(name, '')
-              }}
-            >
-              Clear
-            </Button>
-          ) : null}
-        </div>
-        {previewUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={previewUrl} alt={label} className="h-24 w-full rounded-md border object-cover" />
-        )}
-        {help}
-      </div>
+      <ImageSettingField
+        name={name}
+        label={label}
+        help={help}
+        value={typeof form.watch(name) === 'string' ? (form.watch(name) as string) : ''}
+        form={form}
+        onChooseImage={onChooseImage}
+        onCommit={onCommit}
+      />
     )
   }
 
@@ -435,6 +417,89 @@ function SettingField({ definition, locale, form, fonts, products, onChooseImage
           />
         )}
       />
+      {help}
+    </div>
+  )
+}
+
+/**
+ * Image settings accept either a media-library pick or a hand-written URL.
+ * The preview reports a failed load instead of showing a broken icon, which is
+ * how a file that is missing on the backend storage becomes visible.
+ */
+function ImageSettingField({
+  name,
+  label,
+  help,
+  value,
+  form,
+  onChooseImage,
+  onCommit,
+}: {
+  name: string
+  label: string
+  help: ReactNode
+  value: string
+  form: UseFormReturn<SettingsFormValues>
+  onChooseImage: () => void
+  onCommit: (fieldName: string, value: unknown) => void
+}) {
+  const [failedValue, setFailedValue] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  const previewUrl = resolveMediaUrl(value)
+  const failed = value !== '' && failedValue === value
+
+  const setValue = (next: string) => {
+    form.setValue(name, next, { shouldDirty: true })
+    onCommit(name, next)
+  }
+
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={name}>{label}</Label>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={onChooseImage} className="flex-1 justify-start gap-2">
+          <ImageIcon className="size-4" aria-hidden="true" />
+          {value ? 'Replace image' : 'Choose image'}
+        </Button>
+        {value ? (
+          <Button type="button" variant="ghost" onClick={() => setValue('')}>
+            Clear
+          </Button>
+        ) : null}
+      </div>
+      <Input
+        id={name}
+        value={value}
+        placeholder="/storage/media/… or https://…"
+        onChange={(event) => form.setValue(name, event.target.value, { shouldDirty: true })}
+        onBlur={(event) => onCommit(name, event.target.value)}
+      />
+      {previewUrl ? (
+        <div className="relative">
+          {failed ? (
+            <div className="flex flex-col items-center gap-2 rounded-md border border-dashed p-3 text-center">
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                This image could not be loaded. The file may be missing on the storage server.
+              </p>
+              <code className="max-w-full truncate text-[10px] text-muted-foreground">{previewUrl}</code>
+              <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => { setFailedValue(null); setAttempt((current) => current + 1) }}>
+                <RefreshCw className="size-3.5" aria-hidden="true" />
+                Retry
+              </Button>
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`${previewUrl}-${attempt}`}
+              src={previewUrl}
+              alt={label}
+              className="h-24 w-full rounded-md border object-cover"
+              onError={() => setFailedValue(value)}
+            />
+          )}
+        </div>
+      ) : null}
       {help}
     </div>
   )

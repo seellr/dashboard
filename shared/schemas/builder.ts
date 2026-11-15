@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { SettingType } from '@/shared/types/builder'
 
 const localizedValueSchema = z.object({ ar: z.string(), en: z.string() })
 
@@ -34,6 +35,56 @@ const settingOptionSchema = z
     label: labelToString(option.label, option.value),
   }))
 
+/**
+ * Theme manifests in the wild spell setting types differently (`media` vs
+ * `image`, `boolean` vs `toggle`, `text_area`, …). Unknown spellings used to
+ * fall through to the plain text input, so an `image` field could not be
+ * edited with the media picker. Normalise every alias to a known type.
+ */
+const SETTING_TYPE_ALIASES: Record<string, SettingType> = {
+  text: 'text',
+  string: 'text',
+  textarea: 'textarea',
+  text_area: 'textarea',
+  longtext: 'textarea',
+  richtext: 'richtext',
+  html: 'richtext',
+  editor: 'richtext',
+  url: 'url',
+  link: 'url',
+  number: 'number',
+  integer: 'number',
+  range: 'range',
+  slider: 'range',
+  toggle: 'toggle',
+  boolean: 'toggle',
+  switch: 'toggle',
+  checkbox: 'toggle',
+  color: 'color',
+  colour: 'color',
+  colorpicker: 'color',
+  font: 'font',
+  fontfamily: 'font',
+  select: 'select',
+  dropdown: 'select',
+  choice: 'select',
+  image: 'image',
+  media: 'image',
+  file: 'image',
+  upload: 'image',
+  imageurl: 'image',
+  product: 'product',
+  productid: 'product',
+  product_list: 'product_list',
+  productlist: 'product_list',
+  products: 'product_list',
+}
+
+function normalizeSettingType(value: string): SettingType {
+  const token = value.trim().toLowerCase().replace(/[\s-]+/g, '_')
+  return SETTING_TYPE_ALIASES[token] ?? 'text'
+}
+
 const settingDefinitionSchema = z
   .object({
     key: z.string(),
@@ -50,7 +101,7 @@ const settingDefinitionSchema = z
   })
   .transform((definition) => ({
     key: definition.key,
-    type: definition.type,
+    type: normalizeSettingType(definition.type),
     label: labelToString(definition.label, definition.key),
     help: definition.help ?? null,
     default: definition.default ?? null,

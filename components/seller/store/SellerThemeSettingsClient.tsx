@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Save, SlidersHorizontal } from 'lucide-react'
+import { ImageIcon, Save, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { MediaPickerDialog } from '@/components/shared/MediaPickerDialog'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { SettingDefinition, SettingOption, SettingType } from '@/shared/types/builder'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 import {
   getActiveSellerTheme,
   getSellerTheme,
@@ -106,9 +108,13 @@ function settingsMapFrom(value: unknown): Record<string, string> {
 
 const SETTING_TYPE_BY_LABEL: Record<string, SettingType> = {
   color: 'color',
+  colour: 'color',
   font: 'font',
+  fontfamily: 'font',
   range: 'range',
+  slider: 'range',
   number: 'number',
+  integer: 'number',
   text: 'text',
   textarea: 'textarea',
   richtext: 'richtext',
@@ -116,9 +122,15 @@ const SETTING_TYPE_BY_LABEL: Record<string, SettingType> = {
   boolean: 'toggle',
   select: 'select',
   image: 'image',
+  media: 'image',
+  file: 'image',
+  upload: 'image',
+  imageurl: 'image',
   url: 'url',
   product: 'product',
+  productid: 'product',
   productlist: 'product_list',
+  products: 'product_list',
 }
 
 function normalizeTypeToken(value: string): string {
@@ -583,6 +595,72 @@ function ThemeSettingField({
   const errorMsg = error ? (
     <p className="text-xs text-destructive">{error}</p>
   ) : null
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [failedValue, setFailedValue] = useState<string | null>(null)
+
+  if (definition.type === 'image') {
+    const preview = resolveMediaUrl(value)
+    const imageFailed = value !== '' && failedValue === value
+    return (
+      <div className="space-y-1 sm:col-span-2">
+        <label htmlFor={id} className="text-sm font-medium">
+          {label}
+        </label>
+        <div className="flex flex-wrap items-start gap-3 rounded-md border p-3">
+          <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded bg-muted">
+            {preview && !imageFailed ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview}
+                alt={label}
+                className="size-full object-cover"
+                onError={() => setFailedValue(value)}
+              />
+            ) : (
+              <ImageIcon className="size-6 text-muted-foreground" aria-hidden="true" />
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} className="gap-2">
+                <ImageIcon className="size-4" aria-hidden="true" />
+                {value ? 'Replace image' : 'Choose image'}
+              </Button>
+              {value && (
+                <Button type="button" variant="ghost" onClick={() => onChange('')}>
+                  Clear
+                </Button>
+              )}
+            </div>
+            <Input
+              id={id}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="/storage/media/… or https://…"
+              maxLength={2000}
+              className={error ? 'border-destructive' : ''}
+            />
+            {imageFailed && (
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                The image could not be loaded. The file may be missing on the storage server.
+              </p>
+            )}
+          </div>
+        </div>
+        <MediaPickerDialog
+          scope="subscriber"
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onSelect={(media) => {
+            if (!Array.isArray(media)) onChange(resolveMediaUrl(media.url))
+            setPickerOpen(false)
+          }}
+        />
+        {help}
+        {errorMsg}
+      </div>
+    )
+  }
 
   if (definition.type === 'toggle') {
     return (
