@@ -22,26 +22,34 @@ function PageTitle({ locale }: { locale: string }) {
   const pathname = usePathname()
   const t = useTranslations('seller')
 
+  // Route segments don't always match the message keys (`theme-builder` is
+  // `nav.pageBuilder`); without the alias next-intl logs MISSING_MESSAGE.
+  const SEGMENT_ALIASES: Record<string, string> = {
+    'theme-builder': 'pageBuilder',
+  }
+  const label = (segment: string) => {
+    const key = SEGMENT_ALIASES[segment] ?? segment
+    return t(`nav.${key}`, {
+      defaultValue: segment.charAt(0).toUpperCase() + segment.slice(1),
+    })
+  }
+
+  // Every segment is shown so the breadcrumb matches the URL: `/theme/strings`
+  // reads "Theme / UI Strings" instead of looking like the theme list. Record
+  // identifiers (ULIDs) are dropped so `/products/<ulid>` stays readable.
   const segments = pathname
     .replace(`/${locale}/seller`, '')
     .split('/')
     .filter(Boolean)
-  // Route segments don't always match the message keys (`theme-builder` is
-  // `nav.pageBuilder`); without the alias next-intl logs MISSING_MESSAGE.
-  const segment = segments[0]
-  const pageKey = segment === 'theme-builder' ? 'pageBuilder' : segment
-
-  const label = pageKey
-    ? t(`nav.${pageKey}`, {
-        defaultValue: pageKey.charAt(0).toUpperCase() + pageKey.slice(1),
-      })
-    : t('nav.dashboard')
+    .filter((segment) => !/^[0-9A-Z]{26}$/i.test(segment))
 
   return (
     <div className="flex min-w-0 items-center gap-1.5 text-sm">
       <span className="hidden text-muted-foreground sm:inline">Seller</span>
       <span className="hidden text-muted-foreground/40 sm:inline">/</span>
-      <span className="truncate font-medium text-foreground">{label}</span>
+      <span className="truncate font-medium text-foreground">
+        {segments.length === 0 ? t('nav.dashboard') : segments.map(label).join(' / ')}
+      </span>
     </div>
   )
 }

@@ -1,24 +1,18 @@
 'use client'
 
+import { useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
-  BarChart3,
-  GitBranch,
   Globe2,
   ImageIcon,
   LayoutDashboard,
-  Mail,
   Package,
   Palette,
   PenTool,
   Receipt,
   Settings,
-  ShoppingCart,
   Store,
-  Ticket,
-  Users,
-  Zap,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -56,24 +50,24 @@ const NAV_GROUPS: Array<{ groupKey: string; items: NavItem[] }> = [
       { key: 'domains', path: (l) => `/${l}/seller/domains`, icon: Globe2 },
     ],
   },
-  {
-    groupKey: 'growth',
-    items: [
-      { key: 'orders', path: (l) => `/${l}/seller/orders`, icon: ShoppingCart, disabled: true },
-      { key: 'coupons', path: (l) => `/${l}/seller/coupons`, icon: Ticket, disabled: true },
-      { key: 'analytics', path: (l) => `/${l}/seller/analytics`, icon: BarChart3, disabled: true },
-      { key: 'funnels', path: (l) => `/${l}/seller/funnels`, icon: GitBranch, disabled: true },
-    ],
-  },
-  {
-    groupKey: 'content',
-    items: [
-      { key: 'email', path: (l) => `/${l}/seller/email`, icon: Mail, disabled: true },
-      { key: 'automation', path: (l) => `/${l}/seller/automation`, icon: Zap, disabled: true },
-      { key: 'crm', path: (l) => `/${l}/seller/crm`, icon: Users, disabled: true },
-      { key: 'vat', path: (l) => `/${l}/seller/vat`, icon: Receipt, disabled: true },
-    ],
-  },
+  // {
+  //   groupKey: 'growth',
+  //   items: [
+  //     { key: 'orders', path: (l) => `/${l}/seller/orders`, icon: ShoppingCart, disabled: true },
+  //     { key: 'coupons', path: (l) => `/${l}/seller/coupons`, icon: Ticket, disabled: true },
+  //     { key: 'analytics', path: (l) => `/${l}/seller/analytics`, icon: BarChart3, disabled: true },
+  //     { key: 'funnels', path: (l) => `/${l}/seller/funnels`, icon: GitBranch, disabled: true },
+  //   ],
+  // },
+  // {
+  //   groupKey: 'content',
+  //   items: [
+  //     { key: 'email', path: (l) => `/${l}/seller/email`, icon: Mail, disabled: true },
+  //     { key: 'automation', path: (l) => `/${l}/seller/automation`, icon: Zap, disabled: true },
+  //     { key: 'crm', path: (l) => `/${l}/seller/crm`, icon: Users, disabled: true },
+  //     { key: 'vat', path: (l) => `/${l}/seller/vat`, icon: Receipt, disabled: true },
+  //   ],
+  // },
   {
     groupKey: 'account',
     items: [
@@ -93,7 +87,24 @@ export function SellerSidebar({
   const t = useTranslations('seller')
   const router = useRouter()
   const pathname = usePathname()
-  const root = `/${locale}/seller`
+
+  /**
+   * Several entries share a path prefix (`/theme` vs `/theme/strings` and
+   * `/theme-builder/editor`), so a plain `startsWith` lit up both "Themes" and
+   * the nested page. Pick the longest matching href instead: children beat
+   * their parent, and `/theme` no longer matches `/theme-builder`.
+   */
+  const activeHref = useMemo(() => {
+    let best: string | null = null
+    for (const group of NAV_GROUPS) {
+      for (const item of group.items) {
+        const href = item.path(locale)
+        if (pathname !== href && !pathname.startsWith(`${href}/`)) continue
+        if (best === null || href.length > best.length) best = href
+      }
+    }
+    return best
+  }, [locale, pathname])
 
   return (
     <Sidebar side={locale === 'ar' ? 'right' : 'left'} variant="inset">
@@ -128,10 +139,7 @@ export function SellerSidebar({
             <SidebarMenu>
               {group.items.map(({ key, path, icon: Icon, disabled }) => {
                 const href = path(locale)
-                const active =
-                  key === 'dashboard'
-                    ? pathname === root
-                    : pathname.startsWith(href)
+                const active = href === activeHref
 
                 return (
                   <SidebarMenuItem key={key}>

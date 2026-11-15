@@ -1,266 +1,471 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { Save, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { sileo } from 'sileo'
+import {
+  AlertTriangle,
+  FileJson,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react'
+import { Button, buttonVariants } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+import { isApiFailure } from '@/lib/shared/api-result'
 import {
   deleteSellerThemeString,
   getSellerThemeStrings,
   importSellerThemeStrings,
   updateSellerThemeString,
-  type ThemeStrings,
 } from '@/lib/seller/resource-client'
+import {
+  THEME_STRING_LOCALES,
+  readImportedCount,
+  toThemeStringEntries,
+  type ThemeStringEntry,
+  type ThemeStringLocale,
+} from '@/lib/seller/theme-strings'
+import { ThemeStringFormDialog, type ThemeStringDraft } from './ThemeStringFormDialog'
+import { ThemeStringsImportDialog } from './ThemeStringsImportDialog'
 
-const LOCALES = ['ar', 'en'] as const
+const stringsQueryKey = (locale: ThemeStringLocale) =>
+  ['seller-theme-strings', locale] as const
 
-function toEntries(value: unknown): Array<[string, string]> {
-  if (Array.isArray(value)) {
-    const entries: Array<[string, string]> = []
-    for (const item of value) {
-      if (
-        item &&
-        typeof item === 'object' &&
-        'key' in item &&
-        typeof (item as { key?: unknown }).key === 'string'
-      ) {
-        const record = item as { key: string; value?: unknown }
-        entries.push([
-          record.key,
-          typeof record.value === 'string' ? record.value : String(record.value ?? ''),
-        ])
-      }
-    }
-    return entries
-  }
-  if (value && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
-      key,
-      typeof entry === 'string' ? entry : JSON.stringify(entry),
-    ])
-  }
-  return []
-}
-
+/**
+ * Endpoints backing this screen (see All.md §Theme):
+ * - GET    /subscriber/theme/locale/{locale}        → `{ key: value }` map
+ * - PUT    /subscriber/theme/locale/{locale}/{key}  → upsert one override
+ * - DELETE /subscriber/theme/locale/{locale}/{key}  → remove one override
+ * - POST   /subscriber/theme/locale/{locale}/import → replace all overrides
+ *
+ * TanStack Query owns the list; every mutation invalidates the active locale so
+ * the table always reflects the server instead of an optimistic local guess.
+ */
 export function SellerThemeStringsClient() {
   const t = useTranslations('seller.theme.strings')
-  const [locale, setLocale] = useState<(typeof LOCALES)[number]>('ar')
-  const [entries, setEntries] = useState<Array<[string, string]>>([])
-  const [draft, setDraft] = useState<Record<string, string>>({})
-  const [newKey, setNewKey] = useState('')
-  const [newValue, setNewValue] = useState('')
-  const [importJson, setImportJson] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
+  const uiLocale = useLocale()
+  const queryClient = useQueryClient()
 
-  const load = useCallback(async (value: string) => {
-    setLoading(true)
-    const result = await getSellerThemeStrings(value)
-    setLoading(false)
-    if (!result.ok) {
-      setMessage(result.message)
-      return
-    }
-    const next = toEntries(result.data)
-    setEntries(next)
-    setDraft(Object.fromEntries(next))
-  }, [])
+  const [locale, setLocale] = useState<ThemeStringLocale>('ar')
+  const [search, setSearch] = useState('')
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<ThemeStringEntry | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ThemeStringEntry | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void load(locale)
-    }, 0)
-    return () => window.clearTimeout(timer)
-  }, [load, locale])
+  const stringsQuery = useQuery({
+    queryKey: stringsQueryKey(locale),
+    queryFn: () => getSellerThemeStrings(locale),
+    retry: false,
+    staleTime: 30_000,
+  })
 
-  const saveKey = async (key: string, value: string) => {
-    setBusy(true)
-    setMessage('')
-    const result = await updateSellerThemeString(locale, key, value)
-    setBusy(false)
-    if (!result.ok) {
-      setMessage(result.message)
-      return
-    }
-    setEntries((current) =>
-      current.some(([entryKey]) => entryKey === key)
-        ? current.map(([entryKey, entryValue]) =>
-            entryKey === key ? [entryKey, value] : [entryKey, entryValue],
-          )
-        : [...current, [key, value]],
+  const result = stringsQuery.data
+  const entries = useMemo(
+    () => (result?.ok ? toThemeStringEntries(result.data) : []),
+    [result],
+  )
+  const existingKeys = useMemo(
+    () => new Set(entries.map((entry) => entry.key)),
+    [entries],
+  )
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return entries
+    return entries.filter(
+      (entry) =>
+        entry.key.toLowerCase().includes(term) ||
+        entry.value.toLowerCase().includes(term),
     )
-    setDraft((current) => ({ ...current, [key]: value }))
-    setMessage(t('saved'))
+  }, [entries, search])
+
+  const saveString = useMutation({
+    mutationFn: (input: { locale: ThemeStringLocale; draft: ThemeStringDraft }) =>
+      updateSellerThemeString(input.locale, input.draft.key, input.draft.value),
+  })
+
+  const deleteString = useMutation({
+    mutationFn: (input: { locale: ThemeStringLocale; key: string }) =>
+      deleteSellerThemeString(input.locale, input.key),
+  })
+
+  const importStrings = useMutation({
+    mutationFn: (input: {
+      locale: ThemeStringLocale
+      strings: Record<string, string>
+    }) => importSellerThemeStrings(input.locale, input.strings),
+  })
+
+  const canEdit = result?.ok === true
+
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: stringsQueryKey(locale) })
   }
 
-  const removeKey = async (key: string) => {
-    if (!window.confirm(t('confirmDelete', { key }))) return
-    setBusy(true)
-    const result = await deleteSellerThemeString(locale, key)
-    setBusy(false)
-    if (!result.ok) {
-      setMessage(result.message)
-      return
+  const handleSave = async (draft: ThemeStringDraft) => {
+    const response = await saveString.mutateAsync({ locale, draft })
+    if (!response.ok) {
+      sileo.error({ title: response.message })
+      return false
     }
-    setEntries((current) => current.filter(([entryKey]) => entryKey !== key))
-    setDraft((current) => {
-      const next = { ...current }
-      delete next[key]
-      return next
+    sileo.success({ title: t('saved') })
+    await refresh()
+    return true
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const response = await deleteString.mutateAsync({
+      locale,
+      key: deleteTarget.key,
     })
+    if (!response.ok) {
+      sileo.error({ title: response.message })
+      return
+    }
+    sileo.success({ title: t('deleted') })
+    setDeleteTarget(null)
+    await refresh()
   }
 
-  const replaceAll = async () => {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(importJson) as unknown
-    } catch {
-      setMessage(t('invalidJson'))
-      return
+  const handleImport = async (strings: Record<string, string>) => {
+    const response = await importStrings.mutateAsync({ locale, strings })
+    if (!response.ok) {
+      sileo.error({ title: response.message })
+      return false
     }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      setMessage(t('invalidJson'))
-      return
-    }
-    if (!window.confirm(t('confirmImport', { locale }))) return
-    setBusy(true)
-    const result = await importSellerThemeStrings(locale, parsed as ThemeStrings)
-    setBusy(false)
-    if (!result.ok) {
-      setMessage(result.message)
-      return
-    }
-    setImportJson('')
-    await load(locale)
-    setMessage(t('imported'))
+    const imported = readImportedCount(response.data)
+    sileo.success({
+      title:
+        imported === null
+          ? t('imported')
+          : t('importedCount', { count: imported }),
+    })
+    await refresh()
+    return true
   }
+
+  const changeLocale = (next: ThemeStringLocale) => {
+    if (next === locale) return
+    setLocale(next)
+    setSearch('')
+    setFormOpen(false)
+    setEditing(null)
+    setDeleteTarget(null)
+    setImportOpen(false)
+  }
+
+  const openCreate = () => {
+    setEditing(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (entry: ThemeStringEntry) => {
+    setEditing(entry)
+    setFormOpen(true)
+  }
+
+  const failure = result && isApiFailure(result) ? result : null
+  const themeMissing = failure?.errorCode === 'localization_theme_not_found'
 
   return (
-    <section className="space-y-5">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <label htmlFor="theme-locale" className="text-sm font-medium">
-            {t('locale')}
-          </label>
-          <select
-            id="theme-locale"
-            value={locale}
-            onChange={(event) => setLocale(event.target.value as (typeof LOCALES)[number])}
-            className="h-8 rounded-lg border bg-background px-2 text-sm"
-          >
-            {LOCALES.map((value) => (
-              <option key={value} value={value}>
-                {value === 'ar' ? 'العربية' : 'English'}
-              </option>
-            ))}
-          </select>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="group"
+          aria-label={t('locale')}
+          className="inline-flex items-center gap-1 rounded-lg bg-muted p-[3px]"
+        >
+          {THEME_STRING_LOCALES.map((item) => {
+            const active = item.value === locale
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => changeLocale(item.value)}
+                aria-pressed={active}
+                className={cn(
+                  'h-7 rounded-md px-3 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-background text-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {item.label}
+              </button>
+            )
+          })}
         </div>
-      </div>
 
-      {message && (
-        <p role="status" className="text-sm text-muted-foreground">
-          {message}
-        </p>
-      )}
+        <div className="flex flex-wrap items-center gap-2">
+          <InputGroup className="w-full sm:w-64">
+            <InputGroupAddon>
+              <Search aria-hidden="true" />
+            </InputGroupAddon>
+            <InputGroupInput
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
+            />
+            {search ? (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="icon-xs"
+                  aria-label={t('clearSearch')}
+                  title={t('clearSearch')}
+                  onClick={() => setSearch('')}
+                >
+                  <X aria-hidden="true" />
+                </InputGroupButton>
+              </InputGroupAddon>
+            ) : null}
+          </InputGroup>
 
-      <div className="space-y-3 rounded-lg border p-4">
-        <h2 className="font-medium">{t('overrides')}</h2>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">{t('loading')}</p>
-        ) : entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('empty')}</p>
-        ) : (
-          <div className="space-y-3">
-            {entries.map(([key]) => (
-              <div key={key} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
-                <code className="truncate rounded bg-muted px-2 py-1 text-xs">{key}</code>
-                <Input
-                  value={draft[key] ?? ''}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, [key]: event.target.value }))
-                  }
-                  aria-label={t('valueFor', { key })}
-                />
-                <div className="flex gap-1">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    disabled={busy}
-                    aria-label={t('saveKey', { key })}
-                    onClick={() => void saveKey(key, draft[key] ?? '')}
-                  >
-                    <Save className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    disabled={busy}
-                    aria-label={t('deleteKey', { key })}
-                    onClick={() => void removeKey(key)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2 rounded-lg border p-4">
-        <h2 className="font-medium">{t('addTitle')}</h2>
-        <div className="flex flex-wrap gap-2">
-          <Input
-            value={newKey}
-            onChange={(event) => setNewKey(event.target.value)}
-            placeholder={t('key')}
-            aria-label={t('key')}
-            className="max-w-xs"
-          />
-          <Input
-            value={newValue}
-            onChange={(event) => setNewValue(event.target.value)}
-            placeholder={t('value')}
-            aria-label={t('value')}
-            className="max-w-sm"
-          />
           <Button
-            disabled={busy || !newKey.trim()}
-            onClick={() => {
-              void saveKey(newKey.trim(), newValue).then(() => {
-                setNewKey('')
-                setNewValue('')
-              })
-            }}
+            variant="outline"
+            onClick={() => setImportOpen(true)}
+            disabled={!canEdit}
           >
-            {t('save')}
+            <FileJson className="size-4" aria-hidden="true" />
+            {t('import')}
+          </Button>
+          <Button onClick={openCreate} disabled={!canEdit}>
+            <Plus className="size-4" aria-hidden="true" />
+            {t('add')}
           </Button>
         </div>
       </div>
 
-      <div className="space-y-2 rounded-lg border p-4">
-        <h2 className="font-medium">{t('importTitle')}</h2>
-        <p className="text-xs text-amber-700 dark:text-amber-300">
-          {t('importWarning')}
-        </p>
-        <Textarea
-          value={importJson}
-          onChange={(event) => setImportJson(event.target.value)}
-          placeholder={'{ "key": "value" }'}
-          aria-label={t('importJson')}
-          rows={6}
-        />
-        <Button
-          variant="outline"
-          disabled={busy || !importJson.trim()}
-          onClick={() => void replaceAll()}
-        >
-          {t('import')}
-        </Button>
-      </div>
+      {failure ? (
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+          <div className="flex min-w-0 items-start gap-2">
+            <AlertTriangle
+              className="mt-0.5 size-4 shrink-0 text-destructive"
+              aria-hidden="true"
+            />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {themeMissing ? t('themeRequiredTitle') : t('loadFailed')}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {themeMissing ? t('themeRequiredBody') : failure.message}
+              </p>
+            </div>
+          </div>
+          {themeMissing ? (
+            <Link
+              href={`/${uiLocale}/seller/theme`}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              {t('themeRequiredAction')}
+            </Link>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={stringsQuery.isFetching}
+              onClick={() => void stringsQuery.refetch()}
+            >
+              <RefreshCw
+                className={cn('size-4', stringsQuery.isFetching && 'animate-spin')}
+                aria-hidden="true"
+              />
+              {t('retry')}
+            </Button>
+          )}
+        </div>
+      ) : null}
+
+      {!failure ? (
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+            <h2 className="text-sm font-medium">{t('overrides')}</h2>
+            <span className="text-xs text-muted-foreground">
+              {t('count', { count: filtered.length })}
+            </span>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[38%]">{t('key')}</TableHead>
+                <TableHead>{t('value')}</TableHead>
+                <TableHead className="w-24 text-end">{t('actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {stringsQuery.isPending ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Skeleton className="h-5 w-44" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-full max-w-[420px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="ms-auto h-7 w-16" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-12 text-center">
+                    <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
+                      <FileJson
+                        className="size-8 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        {search ? t('noResults') : t('empty')}
+                      </p>
+                      {!search && canEdit ? (
+                        <Button size="sm" onClick={openCreate}>
+                          <Plus className="size-4" aria-hidden="true" />
+                          {t('add')}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((entry) => (
+                  <TableRow key={entry.key}>
+                    <TableCell className="align-top">
+                      <code
+                        dir="ltr"
+                        title={entry.key}
+                        className="block max-w-[320px] truncate rounded bg-muted px-1.5 py-0.5 text-start font-mono text-xs"
+                      >
+                        {entry.key}
+                      </code>
+                    </TableCell>
+                    <TableCell className="whitespace-normal align-top">
+                      <p
+                        dir="auto"
+                        title={entry.value}
+                        className="line-clamp-2 max-w-[560px] text-sm"
+                      >
+                        {entry.value}
+                      </p>
+                    </TableCell>
+                    <TableCell className="align-top text-end">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={t('editKey', { key: entry.key })}
+                          title={t('editKey', { key: entry.key })}
+                          onClick={() => openEdit(entry)}
+                        >
+                          <Pencil aria-hidden="true" />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          aria-label={t('deleteKey', { key: entry.key })}
+                          title={t('deleteKey', { key: entry.key })}
+                          onClick={() => setDeleteTarget(entry)}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
+
+      <ThemeStringFormDialog
+        open={formOpen}
+        onOpenChange={(next) => {
+          setFormOpen(next)
+          if (!next) setEditing(null)
+        }}
+        locale={locale}
+        initial={editing}
+        existingKeys={existingKeys}
+        onSubmit={handleSave}
+      />
+
+      <ThemeStringsImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        locale={locale}
+        onImport={handleImport}
+      />
+
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteString.isPending) setDeleteTarget(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteTitle')}</DialogTitle>
+            <DialogDescription>
+              {deleteTarget
+                ? t('deleteDescription', { key: deleteTarget.key })
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleteString.isPending}
+              onClick={() => setDeleteTarget(null)}
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteString.isPending}
+              onClick={() => void handleDelete()}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              {deleteString.isPending ? t('deleting') : t('delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

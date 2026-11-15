@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Redo2, Save, Undo2 } from 'lucide-react'
+import Link from 'next/link'
+import {
+  ChevronLeft,
+  FileText,
+  Layers,
+  Redo2,
+  Save,
+  SlidersHorizontal,
+  Undo2,
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { PageSwitcher } from '@/builder/components/PageSwitcher'
 import { PreviewFrame } from '@/builder/components/PreviewFrame'
@@ -12,7 +22,11 @@ import { SettingsPanel } from '@/builder/components/SettingsPanel'
 import { useEditorStore } from '@/builder/store/editor-store'
 import { useAutoSaveDraft } from '@/builder/hooks/useAutoSaveDraft'
 import { useBeforeUnloadWarning } from '@/builder/hooks/useBeforeUnloadWarning'
-import { useBuilderDraft, useBuilderPages, useBuilderSchema } from '@/builder/hooks/useBuilderData'
+import {
+  useBuilderDraft,
+  useBuilderPages,
+  useBuilderSchema,
+} from '@/builder/hooks/useBuilderData'
 import { BuilderApiError, subscriberThemeApi } from '@/api/client'
 import { builderPageSchema } from '@/shared/schemas/builder'
 import { PublishControls } from '@/builder/components/PublishControls'
@@ -38,6 +52,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function EditorShell() {
+  const t = useTranslations('seller.builder')
   const page = useEditorStore((state) => state.page)
   const schema = useEditorStore((state) => state.schema)
   const locale = useEditorStore((state) => state.locale)
@@ -51,6 +66,21 @@ export function EditorShell() {
   const setSchema = useEditorStore((state) => state.setSchema)
   const schemaQuery = useBuilderSchema(locale)
   const pagesQuery = useBuilderPages(locale)
+
+  const [activeTab, setActiveTab] = useState<'sections' | 'settings'>('sections')
+
+  // Automatically switch left panel tab to 'settings' when a section is selected
+  useEffect(() => {
+    if (selectedSectionId) {
+      setActiveTab('settings')
+    }
+  }, [selectedSectionId])
+
+  const selectedSection = useMemo(
+    () => page.sections.find((item) => item.id === selectedSectionId),
+    [page.sections, selectedSectionId],
+  )
+
   /**
    * The editor keeps the page being edited in `?page=<ulid>` so a reload lands
    * on the same page. Without it the editor always returned to `home`, which
@@ -124,7 +154,10 @@ export function EditorShell() {
 
   const handlePreviewMessage = useCallback(
     (message: PreviewToEditorMessage) => {
-      if (message.type === 'SECTION_CLICKED') selectSection(message.sectionId)
+      if (message.type === 'SECTION_CLICKED') {
+        selectSection(message.sectionId)
+        setActiveTab('settings')
+      }
     },
     [selectSection],
   )
@@ -144,64 +177,111 @@ export function EditorShell() {
   const pagesEmpty = settled && !pagesQuery.error && (pagesQuery.data?.length ?? 0) === 0
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-xl border bg-background">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
-        <div className="flex items-center gap-3">
-          <PageSwitcher beforeSwitch={autoSave.flush} />
-          <span className="text-xs text-muted-foreground">
-            {autoSave.status === 'saving'
-              ? 'Saving…'
-              : autoSave.status === 'failed'
-                ? 'Save failed'
-                : dirty
-                  ? 'Unsaved changes'
-                  : autoSave.status === 'saved'
-                    ? 'Saved'
-                    : queryError
-                      ? 'Offline draft'
-                      : !pageFromServer
-                        ? 'Sample layout (not saved)'
-                        : 'Saved'}
-          </span>
+    <div className="flex h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-xl border bg-background shadow-xs">
+      {/* Top Header Bar */}
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 bg-card/80 backdrop-blur-xs">
+        {/* Left: Exit Link + Live Save Status */}
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/${locale}/seller/theme`}
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="size-4 rtl:rotate-180" />
+            <span>{t('backToThemes')}</span>
+          </Link>
+
+          <div className="h-4 w-px bg-border" />
+
+          {/* Status Dot & Message */}
+          <div className="flex items-center gap-2 text-xs">
+            <span
+              className={`inline-flex size-2 rounded-full ${
+                autoSave.status === 'saving'
+                  ? 'bg-blue-500 animate-pulse'
+                  : autoSave.status === 'failed'
+                    ? 'bg-destructive'
+                    : dirty
+                      ? 'bg-amber-500 animate-pulse'
+                      : 'bg-emerald-500'
+              }`}
+            />
+            <span className="text-muted-foreground text-[11px] font-medium">
+              {autoSave.status === 'saving'
+                ? t('saving')
+                : autoSave.status === 'failed'
+                  ? t('saveFailed')
+                  : dirty
+                    ? t('unsavedChanges')
+                    : autoSave.status === 'saved'
+                      ? t('saved')
+                      : queryError
+                        ? t('offlineDraft')
+                        : !pageFromServer
+                          ? t('sampleLayout')
+                          : t('saved')}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1">
+
+        {/* Right: Publish Controls + AR/EN + Undo/Redo + Save */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <PublishControls flush={autoSave.flush} onPreviewToken={setPreviewToken} />
-          <Button variant={locale === 'ar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('ar')}>
-            AR
-          </Button>
-          <Button variant={locale === 'en' ? 'secondary' : 'ghost'} size="sm" onClick={() => setLocale('en')}>
-            EN
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Undo"
-            onClick={() => useEditorStore.temporal.getState().undo()}
-          >
-            <Undo2 />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Redo"
-            onClick={() => useEditorStore.temporal.getState().redo()}
-          >
-            <Redo2 />
-          </Button>
+
+          <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
+            <Button
+              variant={locale === 'ar' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setLocale('ar')}
+            >
+              AR
+            </Button>
+            <Button
+              variant={locale === 'en' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setLocale('en')}
+            >
+              EN
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Undo"
+              onClick={() => useEditorStore.temporal.getState().undo()}
+              title="Undo"
+            >
+              <Undo2 className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Redo"
+              onClick={() => useEditorStore.temporal.getState().redo()}
+              title="Redo"
+            >
+              <Redo2 className="size-3.5" />
+            </Button>
+          </div>
+
           <Button
             size="sm"
-            className="gap-2"
+            className="h-8 gap-1.5 px-3 text-xs"
             disabled={!dirty || !pageFromServer || autoSave.status === 'saving'}
             onClick={() => void autoSave.flush()}
           >
-            <Save className="size-4" />
-            {autoSave.status === 'failed' ? 'Retry' : 'Save'}
+            <Save className="size-3.5" />
+            <span>{autoSave.status === 'failed' ? 'Retry' : 'Save'}</span>
           </Button>
         </div>
       </header>
 
+      {/* Warning/Error Banners */}
       {loadFailure && (
-        <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           <p>
             Could not load the {loadFailure} from the server; your local editor remains active.
           </p>
@@ -210,14 +290,14 @@ export function EditorShell() {
       )}
 
       {autoSave.status === 'failed' && autoSave.error != null && (
-        <div className="border-b bg-red-50 px-4 py-2 text-xs text-red-900">
+        <div className="border-b bg-red-50 px-4 py-2 text-xs text-red-900 dark:bg-red-950/40 dark:text-red-200">
           <p>Saving the draft failed. Your changes are kept locally.</p>
           <p className="mt-1 font-mono text-[11px] break-all">{errorMessage(autoSave.error)}</p>
         </div>
       )}
 
       {settled && !pageFromServer && !loadFailure && (
-        <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           {pagesEmpty ? (
             <>
               The active theme has no pages yet, so this is a sample layout and saving is disabled.
@@ -232,9 +312,75 @@ export function EditorShell() {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1">
-        <SectionsPanel />
-        <main className="min-w-0 flex-1 overflow-auto p-4">
+      {/* Main Workspace: Left Panel (Controls) + Right Side (Live Page Preview) */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* LEFT PANEL: Page Selector, Sections & Settings */}
+        <aside className="w-[360px] lg:w-[400px] shrink-0 border-e bg-card/60 backdrop-blur-xs flex flex-col min-h-0 overflow-hidden">
+          {/* 1. Page Switcher Header */}
+          <div className="border-b p-3 bg-muted/20">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="size-3.5" />
+                <span>{t('page')}</span>
+              </span>
+              <span className="text-[10px] rounded-full border bg-background px-2 py-0.5 text-muted-foreground font-mono">
+                {page.type}
+              </span>
+            </div>
+            <PageSwitcher beforeSwitch={autoSave.flush} />
+          </div>
+
+          {/* 2. Mode Segmented Navigation: Sections vs Settings */}
+          <div className="border-b p-2 bg-muted/10">
+            <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-0.5 w-full">
+              <button
+                type="button"
+                onClick={() => setActiveTab('sections')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
+                  activeTab === 'sections'
+                    ? 'bg-background text-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Layers className="size-3.5" />
+                <span>{t('sections')}</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] text-muted-foreground">
+                  {page.sections.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
+                  activeTab === 'settings'
+                    ? 'bg-background text-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <SlidersHorizontal className="size-3.5" />
+                <span>{t('settings')}</span>
+                {selectedSection && (
+                  <span className="max-w-[70px] truncate rounded bg-primary/10 text-primary px-1 text-[10px]">
+                    {selectedSection.type}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Panel Body: Sections List or Settings Form */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-3">
+            {activeTab === 'sections' ? (
+              <SectionsPanel />
+            ) : (
+              <SettingsPanel onBack={() => setActiveTab('sections')} />
+            )}
+          </div>
+        </aside>
+
+        {/* RIGHT SIDE: Live Page Preview */}
+        <main className="flex-1 min-w-0 flex flex-col min-h-0 bg-muted/20 overflow-hidden">
           <PreviewFrame
             page={page}
             schema={schema}
@@ -244,17 +390,7 @@ export function EditorShell() {
             onMessage={handlePreviewMessage}
           />
         </main>
-        <SettingsPanel />
       </div>
-
-      <footer className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
-        <span>Theme editor</span>
-        <span className="flex items-center gap-1">
-          <ArrowLeft className="size-3" />
-          Drag sections to reorder
-          <ArrowRight className="size-3" />
-        </span>
-      </footer>
     </div>
   )
 }
