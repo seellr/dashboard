@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
@@ -21,6 +20,7 @@ import {
   getMediaUrl,
   isAllowedMediaFile,
 } from '@/types/dto/media.dto'
+import { MediaThumbnail } from './MediaThumbnail'
 
 interface MediaLibraryProps {
   accept?: string
@@ -356,10 +356,9 @@ export function MediaLibrary({
                   }}
                 >
                   {item.thumb_url || item.url ? (
-                    <img
+                    <MediaThumbnail
                       src={getMediaUrl(item.thumb_url || item.url)}
                       alt={item.alt_text ?? item.name ?? item.original_name ?? ''}
-                      className="aspect-video w-full object-cover"
                     />
                   ) : (
                     <div className="flex aspect-video items-center justify-center bg-muted">

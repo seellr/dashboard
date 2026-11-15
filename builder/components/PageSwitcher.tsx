@@ -106,7 +106,7 @@ export function PageSwitcher({ beforeSwitch }: { beforeSwitch?: () => Promise<un
         void switchPage(match)
       }}
     >
-      <SelectTrigger className="w-44" aria-label="Select page">
+      <SelectTrigger className="w-full h-9 bg-background text-xs font-medium" aria-label="Select page">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

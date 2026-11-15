@@ -363,13 +363,16 @@ export async function getSellerThemeStrings(locale: string) {
   return sellerFetchClient<ThemeStrings>(`/theme/locale/${encodeURIComponent(locale)}`)
 }
 export async function importSellerThemeStrings(locale: string, strings: ThemeStrings) {
-  return sellerFetchClient<unknown>(`/theme/locale/${encodeURIComponent(locale)}/import`, {
-    method: 'POST',
-    body: JSON.stringify({ strings }),
-  })
+  return sellerFetchClient<{ imported?: number }>(
+    `/theme/locale/${encodeURIComponent(locale)}/import`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ strings }),
+    },
+  )
 }
 export async function updateSellerThemeString(locale: string, key: string, value: string) {
-  return sellerFetchClient<unknown>(
+  return sellerFetchClient<{ key: string; value: string }>(
     `/theme/locale/${encodeURIComponent(locale)}/${encodeURIComponent(key)}`,
     { method: 'PUT', body: JSON.stringify({ value }) },
   )

@@ -92,12 +92,19 @@ export const subscriberThemeApi = {
     builderFetch<ThemeSummary[]>(`/themes?per_page=15${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, { locale, method: 'GET' }),
   getTheme: (locale: Locale, ulid: string) => builderFetch<ThemeSummary>(`/themes/${ulid}`, { locale, method: 'GET' }),
   getActiveTheme: (locale: Locale) => builderFetch<SubscriberTheme>('/theme', { locale, method: 'GET' }),
-  /**
-   * `PUT /subscriber/theme/settings` expects an array of `{ key, value }`
-   * pairs, not a key/value map (see All.md §Theme).
-   */
-  updateThemeSettings: (locale: Locale, settings: ThemeSettingInput[]) =>
-    builderFetch<SubscriberTheme>('/theme/settings', { locale, method: 'PUT', body: JSON.stringify({ settings }) }),
+  updateThemeSettings: (
+    locale: Locale,
+    settings: ThemeSettingInput[] | Record<string, unknown>,
+  ) => {
+    const payload = Array.isArray(settings)
+      ? Object.fromEntries(settings.map((item) => [item.key, item.value]))
+      : settings
+    return builderFetch<SubscriberTheme>('/theme/settings', {
+      locale,
+      method: 'PUT',
+      body: JSON.stringify({ settings: payload }),
+    })
+  },
   getSchema: (locale: Locale) => builderFetch<ThemeSchema>('/theme/schema', { locale, method: 'GET' }),
   listPages: (locale: Locale) => builderFetch<BuilderPage[]>(`/pages?per_page=100`, { locale, method: 'GET' }),
   getDraft: (locale: Locale, pageUlid: string) => builderFetch<BuilderPage>(`/pages/${pageUlid}/draft`, { locale, method: 'GET' }),
