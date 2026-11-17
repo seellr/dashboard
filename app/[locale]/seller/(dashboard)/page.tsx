@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
+import { SellerProductsCarousel } from '@/components/seller/store/SellerProductsCarousel'
 import { getSellerTenant } from '@/lib/seller/tenant'
 import { sellerFetchServer } from '@/lib/seller/api-server'
 import {
@@ -150,6 +151,8 @@ export default async function SellerDashboardPage({
           </CardContent>
         </Card>
       </div>
+
+      <SellerProductsCarousel />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {links.map(({ key, href, icon: Icon }) => (

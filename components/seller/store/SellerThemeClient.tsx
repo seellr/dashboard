@@ -13,6 +13,7 @@ import {
   type SellerTheme,
   type SellerThemeDescriptor,
 } from '@/lib/seller/resource-client'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 function descriptorFromTheme(theme: SellerTheme): SellerThemeDescriptor {
   return {
@@ -160,7 +161,7 @@ export function SellerThemeClient({
               <article key={theme.ulid} className="overflow-hidden rounded-lg border">
                 {theme.preview_url ? (
                   <img
-                    src={theme.preview_url}
+                    src={resolveMediaUrl(theme.preview_url)}
                     alt={theme.name ?? theme.slug ?? theme.ulid}
                     className="aspect-video w-full object-cover"
                   />

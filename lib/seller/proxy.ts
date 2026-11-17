@@ -11,6 +11,25 @@ import {
 } from '@/lib/seller/backend-client'
 import { resolveProxyTarget } from '@/lib/seller/mapping'
 import { normalizeEnvelope } from '@/lib/shared/api-envelope'
+import { normalizeMediaUrls } from '@/lib/shared/server-media-normalize'
+
+const MEDIA_RESPONSE_KEYS: Record<string, readonly string[]> = {
+  media: ['url', 'thumb_url'],
+  products: ['url', 'thumb_url', 'hero_image_url', 'image_url'],
+  themes: ['preview_url'],
+}
+
+/**
+ * Only rewrite URL fields on resources that actually contain media. Builder
+ * page/theme payloads also have a `url` setting for button links, so blanket
+ * normalisation there would turn `/products/x` into a backend URL.
+ */
+function mediaKeysForRule(rule: string): readonly string[] | null {
+  if (rule.startsWith('media')) return MEDIA_RESPONSE_KEYS.media
+  if (rule.startsWith('product')) return MEDIA_RESPONSE_KEYS.products
+  if (rule.startsWith('theme')) return MEDIA_RESPONSE_KEYS.themes
+  return null
+}
 
 function errorResponse(
   message: string,
@@ -116,7 +135,15 @@ export async function forwardSubscriberRequest(
       await clearSessionOnUnauthorized()
     }
 
-    return NextResponse.json(normalizeEnvelope(payload, upstream.status), {
+    const mediaKeys = mediaKeysForRule(resolved.rule)
+    const normalizedPayload = mediaKeys
+      ? normalizeMediaUrls(payload, {
+          origin: new URL(BACKEND_API_URL).origin,
+          keys: mediaKeys,
+        })
+      : payload
+
+    return NextResponse.json(normalizeEnvelope(normalizedPayload, upstream.status), {
       status: upstream.status,
     })
   } catch {

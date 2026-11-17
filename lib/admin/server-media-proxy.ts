@@ -1,11 +1,8 @@
 import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminTokenCookie } from '@/lib/admin/auth'
-import {
-  BACKEND_API_URL,
-  backendHeaders,
-  backendMultipartHeaders,
-} from '@/lib/admin/backend-client'
+import { BACKEND_API_URL } from '@/lib/admin/backend-client'
+import { normalizeMediaUrls as normalizeMediaPayload } from '@/lib/shared/server-media-normalize'
 
 export interface ProxyContext {
   token: string
@@ -19,23 +16,9 @@ export interface ProxyContext {
  * without leaking the backend API key into client code.
  */
 export function normalizeMediaUrls<T>(payload: T): T {
-  const backendOrigin = new URL(BACKEND_API_URL).origin
-  const visit = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(visit)
-    if (!value || typeof value !== 'object') return value
-
-    const output: Record<string, unknown> = {}
-    for (const [key, nested] of Object.entries(value)) {
-      if ((key === 'url' || key === 'thumb_url' || key === 'hero_image_url') && typeof nested === 'string' && nested.startsWith('/')) {
-        output[key] = `${backendOrigin}${nested}`
-      } else {
-        output[key] = visit(nested)
-      }
-    }
-    return output
-  }
-
-  return visit(payload) as T
+  return normalizeMediaPayload(payload, {
+    origin: new URL(BACKEND_API_URL).origin,
+  })
 }
 
 /**
