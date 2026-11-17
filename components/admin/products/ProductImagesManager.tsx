@@ -34,6 +34,7 @@ import {
   useUploadGalleryImage,
   useUploadHeroImage,
 } from '@/hooks/queries/useMedia'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 export interface ProductGalleryItem {
   id: number | string
@@ -210,7 +211,7 @@ export function ProductImagesManager({
         {heroPreview ? (
           <div className="relative mt-2 rounded-lg border overflow-hidden bg-muted/20 aspect-video max-w-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={heroPreview} alt="Product hero" className="size-full object-cover" />
+            <img src={resolveMediaUrl(heroPreview)} alt="Product hero" className="size-full object-cover" />
           </div>
         ) : (
           <div
@@ -301,7 +302,7 @@ export function ProductImagesManager({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={img.url}
+                  src={resolveMediaUrl(img.url)}
                   alt={img.alt_text ?? ''}
                   className="size-full object-cover"
                 />

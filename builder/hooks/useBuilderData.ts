@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { BuilderApiError, subscriberThemeApi } from '@/api/client'
+import { withStorefrontSectionFallbacks } from '@/builder/lib/section-fallbacks'
 import { builderPageListSchema, builderPageSchema, themeSchemaResponseSchema } from '@/shared/schemas/builder'
 import type { BuilderPage, Locale, ThemeSchema } from '@/shared/types/builder'
 
@@ -64,7 +65,7 @@ export function useBuilderSchema(locale: Locale) {
           reportInvalidPayload('theme schema', issues, response.data)
           throw invalidPayloadError('theme schema', issues)
         }
-        return parsed.data as ThemeSchema
+        return withStorefrontSectionFallbacks(parsed.data as ThemeSchema)
       } catch (error) {
         if (error instanceof BuilderApiError) {
           console.error('[builder] Theme schema request failed', error.status, error.code, error.message)

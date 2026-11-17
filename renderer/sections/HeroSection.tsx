@@ -8,7 +8,7 @@ import { settingString, settingText } from '../section-utils'
  * all of them, plus media reference objects, so an uploaded image shows up
  * regardless of the theme's naming.
  */
-const HERO_IMAGE_KEYS = ['image', 'image_url', 'background_image', 'background_image_url', 'hero_image', 'banner_image', 'media']
+const HERO_IMAGE_KEYS = ['image', 'image_url', 'background_image', 'background_image_url', 'hero_image', 'hero_image_url', 'banner_image', 'banner_image_url', 'media']
 
 const IMAGE_URL_PATTERN = /\.(png|jpe?g|webp|gif|avif|svg)(\?|#|$)/i
 

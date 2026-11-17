@@ -8,6 +8,7 @@ import { Trash2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 import {
   addSellerBundleItem,
   addSellerProductAsset,
@@ -625,7 +626,7 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
         <div className="grid max-w-3xl gap-4 rounded-lg border p-4">
           <div className="space-y-2">
             <h2 className="font-medium">{t('heroImage')}</h2>
-            {product.hero_image_url && <img src={product.hero_image_url} alt="" className="aspect-video w-full max-w-sm rounded-lg object-cover" />}
+            {product.hero_image_url && <img src={resolveMediaUrl(product.hero_image_url)} alt="" className="aspect-video w-full max-w-sm rounded-lg object-cover" />}
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
               <Upload className="size-4" aria-hidden="true" />
               {t('uploadHero')}
@@ -637,7 +638,7 @@ export function ProductWizard({ initialUlid }: { initialUlid?: string }) {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {gallery.map((image) => (
                 <div key={image.id} className="space-y-1">
-                  <img src={image.url} alt={image.alt_text ?? ''} className="aspect-square w-full rounded-lg object-cover" />
+                  <img src={resolveMediaUrl(image.url)} alt={image.alt_text ?? ''} className="aspect-square w-full rounded-lg object-cover" />
                   <Button size="sm" variant="destructive" onClick={() => void withSave(() => deleteSellerProductImage(product.ulid, image.id)).then((ok) => { if (ok) void reload() })}>
                     <Trash2 className="size-4" aria-hidden="true" />
                   </Button>

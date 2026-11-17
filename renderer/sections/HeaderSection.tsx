@@ -6,13 +6,17 @@ import type { Locale, SectionInstance, SettingValue } from '@/shared/types/build
 import { resolveMediaUrl } from '@/shared/lib/media-url'
 import { settingString, settingText } from '../section-utils'
 
+const LOGO_KEYS = ['logo', 'logo_url', 'logo_image', 'logo_image_url', 'header_logo', 'header_logo_url', 'brand_logo']
+
 function readLogoUrl(settings: SectionInstance['settings']): string {
-  const value: SettingValue | undefined = settings.logo
-  if (typeof value === 'string' && value) return value
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const reference = value as { url?: unknown; thumb_url?: unknown }
-    if (typeof reference.url === 'string' && reference.url) return reference.url
-    if (typeof reference.thumb_url === 'string' && reference.thumb_url) return reference.thumb_url
+  for (const key of LOGO_KEYS) {
+    const value: SettingValue | undefined = settings[key]
+    if (typeof value === 'string' && value) return value
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const reference = value as { url?: unknown; thumb_url?: unknown }
+      if (typeof reference.url === 'string' && reference.url) return reference.url
+      if (typeof reference.thumb_url === 'string' && reference.thumb_url) return reference.thumb_url
+    }
   }
   return ''
 }
@@ -35,7 +39,7 @@ export function HeaderSection({ section, locale }: { section: SectionInstance; l
     <span className="flex items-center gap-2 text-lg font-bold">
       {logo ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt={label} className="size-9 rounded-xl object-cover" />
+        <img src={logo} alt={label} className="size-9 rounded-xl object-contain" />
       ) : (
         <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
           <ShoppingBag className="size-4" />

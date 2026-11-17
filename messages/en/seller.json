@@ -174,6 +174,15 @@
       "plansDescription": "Compare available subscription plans.",
       "settings": "Settings",
       "settingsDescription": "Manage your profile picture and session."
+    },
+    "carousel": {
+      "eyebrow": "Catalog",
+      "title": "Your products",
+      "description": "Browse your latest products and jump back into editing.",
+      "viewAll": "View all products",
+      "newProduct": "New product",
+      "empty": "No products yet. Create your first product to see it here.",
+      "featured": "Featured"
     }
   },
   "tenant": {

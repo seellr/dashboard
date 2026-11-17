@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminTokenCookie } from '@/lib/admin/auth'
-import { BACKEND_API_URL } from '@/lib/admin/backend-client'
-import { BACKEND_API_KEY } from '@/lib/admin/backend-client'
+import { BACKEND_API_URL, BACKEND_API_KEY } from '@/lib/admin/backend-client'
+import {
+  MEDIA_URL_KEYS_WITHOUT_GENERIC,
+  normalizeMediaUrls,
+} from '@/lib/shared/server-media-normalize'
 
 async function forward(request: NextRequest, path: string[]): Promise<NextResponse> {
   const token = await getAdminTokenCookie()
@@ -61,7 +64,11 @@ async function forward(request: NextRequest, path: string[]): Promise<NextRespon
   let json: unknown
   try { json = JSON.parse(text) as unknown } catch { return NextResponse.json({ success: false, message: 'Invalid response from upstream server', error_code: 'upstream_invalid_json', errors: null }, { status: 502 }) }
   if (res.status === 401 && typeof json === 'object' && json !== null && 'message' in json && !('success' in json)) return NextResponse.json({ success: false, message: 'The admin service is unavailable. Please try again later.', error_code: 'service_misconfigured', errors: null }, { status: 502 })
-  return NextResponse.json(json, { status: res.status })
+  const normalized = normalizeMediaUrls(json, {
+    origin: new URL(BACKEND_API_URL).origin,
+    keys: MEDIA_URL_KEYS_WITHOUT_GENERIC,
+  })
+  return NextResponse.json(normalized, { status: res.status })
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {

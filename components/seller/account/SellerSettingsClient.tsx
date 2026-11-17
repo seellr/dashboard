@@ -11,6 +11,7 @@ import {
   updateSellerAvatar,
   type SellerMedia,
 } from '@/lib/seller/resource-client'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 interface SellerAccount {
   name?: string | null
@@ -95,7 +96,7 @@ export function SellerSettingsClient() {
       <div className="flex items-center gap-4">
         <Avatar className="size-14">
           {account.avatar_url && (
-            <AvatarImage src={account.avatar_url} alt={name} />
+            <AvatarImage src={resolveMediaUrl(account.avatar_url)} alt={name} />
           )}
           <AvatarFallback>{name.slice(0, 1).toUpperCase()}</AvatarFallback>
         </Avatar>
