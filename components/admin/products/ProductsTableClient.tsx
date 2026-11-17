@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -165,7 +166,7 @@ export function ProductsTableClient({ locale }: { locale: string }) {
             {row.original.hero_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={row.original.hero_image_url}
+                src={resolveMediaUrl(row.original.hero_image_url)}
                 alt=""
                 className="size-full object-cover"
               />

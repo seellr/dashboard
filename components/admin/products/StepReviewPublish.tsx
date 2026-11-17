@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { Product } from '@/types/dto/product.dto'
 import { updateProduct } from '@/lib/admin/products-client'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 interface StepReviewPublishProps {
   ulid: string
@@ -81,7 +82,7 @@ export function StepReviewPublish({
             {product?.hero_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={product.hero_image_url}
+                src={resolveMediaUrl(product.hero_image_url)}
                 alt="Product Hero"
                 className="size-14 rounded-lg object-cover border"
               />

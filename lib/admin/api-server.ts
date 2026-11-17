@@ -2,6 +2,10 @@ import 'server-only'
 import { getLocale } from 'next-intl/server'
 import { getAdminTokenCookie } from '@/lib/admin/auth'
 import { BACKEND_API_URL, backendHeaders } from '@/lib/admin/backend-client'
+import {
+  MEDIA_URL_KEYS_WITHOUT_GENERIC,
+  normalizeMediaUrls,
+} from '@/lib/shared/server-media-normalize'
 
 export interface ApiMeta {
   per_page: number
@@ -50,5 +54,12 @@ export async function adminFetchServer<T>(path: string, init?: RequestInit): Pro
     }
   }
 
-  return { ok: true, data: json.data as T, meta: json.meta }
+  return {
+    ok: true,
+    data: normalizeMediaUrls(json.data as T, {
+      origin: new URL(BACKEND_API_URL).origin,
+      keys: MEDIA_URL_KEYS_WITHOUT_GENERIC,
+    }),
+    meta: json.meta,
+  }
 }

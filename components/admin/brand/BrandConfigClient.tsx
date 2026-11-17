@@ -15,6 +15,7 @@ import {
   adminOperationsApi,
   type BrandConfigData,
 } from '@/lib/admin/operations-client'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 const optionalText = (max: number) => z.string().max(max).optional().or(z.literal(''))
 
@@ -194,7 +195,7 @@ export function BrandConfigClient({ config, brandUlid, onSaved }: Props) {
           <CardContent className="flex flex-col gap-3">
             {config.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={config.logo_url} alt="Current logo" className="h-12 object-contain" />
+              <img src={resolveMediaUrl(config.logo_url)} alt="Current logo" className="h-12 object-contain" />
             ) : (
               <p className="text-sm text-muted-foreground">No logo uploaded.</p>
             )}
@@ -210,7 +211,7 @@ export function BrandConfigClient({ config, brandUlid, onSaved }: Props) {
           <CardContent className="flex flex-col gap-3">
             {config.favicon_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={config.favicon_url} alt="Current favicon" className="h-8 object-contain" />
+              <img src={resolveMediaUrl(config.favicon_url)} alt="Current favicon" className="h-8 object-contain" />
             ) : (
               <p className="text-sm text-muted-foreground">No favicon uploaded.</p>
             )}

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useProductsAllQuery } from '@/hooks/queries/useProductsAll'
+import { resolveMediaUrl } from '@/shared/lib/media-url'
 
 interface ProductPickerProps {
   value: string | null
@@ -37,7 +38,7 @@ export function ProductPicker({ value, onChange, placeholder = 'Select productâ€
         {selected ? (
           <span className="flex items-center gap-2 truncate">
             {selected.hero_image_url ? (
-              <img src={selected.hero_image_url} alt="" className="h-5 w-5 rounded object-cover" />
+              <img src={resolveMediaUrl(selected.hero_image_url)} alt="" className="h-5 w-5 rounded object-cover" />
             ) : (
               <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
@@ -71,7 +72,7 @@ export function ProductPicker({ value, onChange, placeholder = 'Select productâ€
                 >
                   <Check className={cn('mr-2 h-4 w-4', value === product.ulid ? 'opacity-100' : 'opacity-0')} />
                   {product.hero_image_url ? (
-                    <img src={product.hero_image_url} alt="" className="mr-2 h-6 w-6 rounded object-cover" />
+                    <img src={resolveMediaUrl(product.hero_image_url)} alt="" className="mr-2 h-6 w-6 rounded object-cover" />
                   ) : (
                     <Package className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
