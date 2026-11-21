@@ -26,8 +26,9 @@ interface BlocksEditorProps {
  */
 export function BlocksEditor({ section, definition, locale, fonts, products }: BlocksEditorProps) {
   const addBlock = useEditorStore((state) => state.addBlock)
+  const focusedField = useEditorStore((state) => state.focusedField)
   const blocks = useMemo(() => section.blocks ?? [], [section.blocks])
-  const blockDefinitions = definition.blocks ?? []
+  const blockDefinitions = useMemo(() => definition.blocks ?? [], [definition.blocks])
   const maxBlocks = definition.max_blocks ?? null
 
   const countByType = useMemo(() => {
@@ -37,6 +38,24 @@ export function BlocksEditor({ section, definition, locale, fonts, products }: B
   }, [blocks])
 
   const atGlobalLimit = maxBlocks != null && blocks.length >= maxBlocks
+
+  /**
+   * A text clicked in the preview may belong to a block (hero button, header
+   * link, FAQ item, testimonial). Resolve it to this block's own field name so
+   * the panel can focus that input.
+   */
+  const focusTarget = useMemo(() => {
+    if (!focusedField || focusedField.sectionId !== section.id || !focusedField.blockId) return null
+    const block = blocks.find((item) => item.id === focusedField.blockId)
+    const blockDefinition = blockDefinitions.find((item) => item.handle === block?.type)
+    const target = blockDefinition?.settings.find((item) => item.key === focusedField.key)
+    if (!block || !target) return null
+    return {
+      blockId: block.id,
+      name: settingFieldName(target, locale),
+      token: focusedField.token,
+    }
+  }, [focusedField, section.id, blocks, blockDefinitions, locale])
 
   return (
     <div className="grid gap-3 border-t pt-4">
@@ -58,6 +77,11 @@ export function BlocksEditor({ section, definition, locale, fonts, products }: B
               locale={locale}
               fonts={fonts}
               products={products}
+              focusTarget={
+                focusTarget && focusTarget.blockId === block.id
+                  ? { name: focusTarget.name, token: focusTarget.token }
+                  : null
+              }
             />
           ))}
         </div>
@@ -97,9 +121,10 @@ interface BlockCardProps {
   locale: Locale
   fonts: string[]
   products: SellerProduct[]
+  focusTarget?: { name: string; token: number } | null
 }
 
-function BlockCard({ sectionId, block, definition, locale, fonts, products }: BlockCardProps) {
+function BlockCard({ sectionId, block, definition, locale, fonts, products, focusTarget }: BlockCardProps) {
   const updateBlockSettings = useEditorStore((state) => state.updateBlockSettings)
   const removeBlock = useEditorStore((state) => state.removeBlock)
   const definitions = useMemo(() => definition?.settings ?? [], [definition])
@@ -150,6 +175,7 @@ function BlockCard({ sectionId, block, definition, locale, fonts, products }: Bl
           fonts={fonts}
           products={products}
           onCommit={commitField}
+          focusTarget={focusTarget}
         />
       )}
     </div>

@@ -13,7 +13,7 @@ import {
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { usePreviewMessaging } from '@/builder/hooks/usePreviewMessaging'
-import type { BuilderPage, Locale, ThemeSchema } from '@/shared/types/builder'
+import type { BuilderPage, Locale, ThemeRuntimeSettings, ThemeSchema } from '@/shared/types/builder'
 import type { PreviewToEditorMessage } from '@/shared/types/preview-protocol'
 
 type Device = 'mobile' | 'tablet' | 'desktop'
@@ -27,7 +27,9 @@ interface PreviewFrameProps {
   page: BuilderPage
   schema: ThemeSchema
   locale: Locale
+  themeSettings?: ThemeRuntimeSettings
   selectedSectionId?: string | null
+  focusedField?: { sectionId: string; blockId?: string | null; key: string; token: number } | null
   onMessage?: (message: PreviewToEditorMessage) => void
   previewToken?: string | null
 }
@@ -36,7 +38,9 @@ export function PreviewFrame({
   page,
   schema,
   locale,
+  themeSettings,
   selectedSectionId,
+  focusedField,
   onMessage,
   previewToken,
 }: PreviewFrameProps) {
@@ -50,7 +54,9 @@ export function PreviewFrame({
     page,
     schema,
     locale,
+    themeSettings,
     selectedSectionId,
+    focusedField,
     onMessage,
     onReadyChange: setReady,
   })

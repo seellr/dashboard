@@ -29,6 +29,11 @@ interface EditorState {
   localeTab: Locale
   selectedSectionId: string | null
   selectedBlockId: string | null
+  /**
+   * Field the user asked to edit from the preview. `token` increments on every
+   * click so focusing the same field twice re-scrolls and re-highlights it.
+   */
+  focusedField: FocusedField | null
   dirty: boolean
   /**
    * False while the editor is still showing the built-in sample page. Nothing
@@ -40,6 +45,8 @@ interface EditorState {
   setLocaleTab: (locale: Locale) => void
   selectSection: (sectionId: string | null) => void
   selectBlock: (blockId: string | null) => void
+  focusField: (target: { sectionId: string; blockId?: string | null; key: string }) => void
+  clearFocusedField: () => void
   setPage: (page: BuilderPage) => void
   setSchema: (schema: ThemeSchema) => void
   hydrate: (page: BuilderPage, schema: ThemeSchema) => void
@@ -62,15 +69,31 @@ function clonePage(page: BuilderPage): BuilderPage {
   return { ...page, sections: page.sections.map((section) => ({ ...section, settings: { ...section.settings }, blocks: section.blocks?.map((block) => ({ ...block, settings: { ...block.settings } })) })) }
 }
 
+export interface FocusedField {
+  sectionId: string
+  blockId?: string | null
+  key: string
+  token: number
+}
+
+let focusToken = 0
+
 export const useEditorStore = create<EditorState>()(temporal((set) => ({
-  page: clonePage(samplePage), schema: sampleSchema, locale: 'en', localeTab: 'en', selectedSectionId: samplePage.sections[0]?.id ?? null, selectedBlockId: null, dirty: false, pageFromServer: false,
+  page: clonePage(samplePage), schema: sampleSchema, locale: 'en', localeTab: 'en', selectedSectionId: samplePage.sections[0]?.id ?? null, selectedBlockId: null, focusedField: null, dirty: false, pageFromServer: false,
   setLocale: (locale) => set({ locale }), setLocaleTab: (localeTab) => set({ localeTab }),
-  selectSection: (selectedSectionId) => set({ selectedSectionId, selectedBlockId: null }),
+  selectSection: (selectedSectionId) => set({ selectedSectionId, selectedBlockId: null, focusedField: null }),
   selectBlock: (selectedBlockId) => set({ selectedBlockId }),
-  setPage: (page) => set({ page: clonePage(page), dirty: false, pageFromServer: true, selectedSectionId: page.sections[0]?.id ?? null }),
+  focusField: ({ sectionId, blockId = null, key }) =>
+    set({
+      selectedSectionId: sectionId,
+      selectedBlockId: blockId,
+      focusedField: { sectionId, blockId, key, token: ++focusToken },
+    }),
+  clearFocusedField: () => set({ focusedField: null }),
+  setPage: (page) => set({ page: clonePage(page), dirty: false, pageFromServer: true, selectedSectionId: page.sections[0]?.id ?? null, focusedField: null }),
   setSchema: (schema) => set({ schema }),
-  hydrate: (page, schema) => set((state) => state.pageFromServer ? state : { page: clonePage(page), schema, pageFromServer: true, selectedSectionId: page.sections[0]?.id ?? null }),
-  syncSections: (sections) => set((state) => { const index = state.page.sections.findIndex((section) => section.id === state.selectedSectionId); const next = clonePage({ ...state.page, sections }); return { page: next, dirty: false, selectedSectionId: next.sections[index]?.id ?? next.sections[0]?.id ?? null } }),
+  hydrate: (page, schema) => set((state) => state.pageFromServer ? state : { page: clonePage(page), schema, pageFromServer: true, selectedSectionId: page.sections[0]?.id ?? null, focusedField: null }),
+  syncSections: (sections) => set((state) => { const index = state.page.sections.findIndex((section) => section.id === state.selectedSectionId); const next = clonePage({ ...state.page, sections }); return { page: next, dirty: false, selectedSectionId: next.sections[index]?.id ?? next.sections[0]?.id ?? null, focusedField: null } }),
   updateSectionSettings: (sectionId, settings) => set((state) => ({ page: { ...state.page, sections: state.page.sections.map((section) => section.id === sectionId ? { ...section, settings } : section) }, dirty: true })),
   addBlock: (sectionId, definition, locale) => set((state) => ({
     page: {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import { HexColorPicker } from 'react-colorful'
@@ -28,6 +28,11 @@ export interface SettingsFieldsProps {
   products: SellerProduct[]
   /** Persist one edited field. Always called with the field's own new value. */
   onCommit: (fieldName: string, value: unknown) => void
+  /**
+   * Field the user clicked in the live preview. `token` changes on every click
+   * so clicking the same text twice scrolls back to it again.
+   */
+  focusTarget?: { name: string; token: number } | null
 }
 
 /**
@@ -36,23 +41,53 @@ export interface SettingsFieldsProps {
  * is what lets a user clear a value without it snapping back to the schema
  * default, and it keeps edits independent of react-hook-form validation.
  */
-export function SettingsFields({ definitions, form, locale, fonts, products, onCommit }: SettingsFieldsProps) {
+export function SettingsFields({ definitions, form, locale, fonts, products, onCommit, focusTarget }: SettingsFieldsProps) {
   const [mediaField, setMediaField] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const [highlighted, setHighlighted] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!focusTarget) return
+    const root = formRef.current
+    if (!root) return
+    const name = focusTarget.name.replace(/"/g, '\\"')
+    const wrapper = root.querySelector<HTMLElement>(`[data-setting-field="${name}"]`)
+    if (!wrapper) return
+    setHighlighted(focusTarget.name)
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const control = wrapper.querySelector<HTMLElement>(
+      'input:not([type="hidden"]), textarea, select, [contenteditable="true"], button',
+    )
+    // Focusing the same element twice in a row is a no-op in some browsers,
+    // so blur first when the field is already active.
+    if (control) control.focus({ preventScroll: true })
+    const timer = window.setTimeout(() => setHighlighted(null), 2400)
+    return () => window.clearTimeout(timer)
+  }, [focusTarget])
 
   return (
     <>
-      <form className="grid gap-4" onSubmit={(event) => event.preventDefault()}>
+      <form ref={formRef} className="grid gap-4" onSubmit={(event) => event.preventDefault()}>
         {definitions.map((definition) => (
-          <SettingField
+          <div
             key={definition.key}
-            definition={definition}
-            locale={locale}
-            form={form}
-            fonts={fonts}
-            products={products}
-            onChooseImage={() => setMediaField(settingFieldName(definition, locale))}
-            onCommit={onCommit}
-          />
+            data-setting-field={settingFieldName(definition, locale)}
+            className={`rounded-lg transition-shadow ${
+              highlighted === settingFieldName(definition, locale)
+                ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                : ''
+            }`}
+          >
+            <SettingField
+              definition={definition}
+              locale={locale}
+              form={form}
+              fonts={fonts}
+              products={products}
+              onChooseImage={() => setMediaField(settingFieldName(definition, locale))}
+              onCommit={onCommit}
+            />
+          </div>
         ))}
       </form>
       <MediaPickerDialog
