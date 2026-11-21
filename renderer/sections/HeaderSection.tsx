@@ -4,26 +4,27 @@ import { Languages, Menu, Moon, ShoppingBag, Sun, UserRound, X } from 'lucide-re
 import { useState } from 'react'
 import type { Locale, SectionInstance, SettingValue } from '@/shared/types/builder'
 import { resolveMediaUrl } from '@/shared/lib/media-url'
-import { settingString, settingText } from '../section-utils'
+import { editKey, settingString, settingText } from '../section-utils'
 
 const LOGO_KEYS = ['logo', 'logo_url', 'logo_image', 'logo_image_url', 'header_logo', 'header_logo_url', 'brand_logo']
 
-function readLogoUrl(settings: SectionInstance['settings']): string {
+function readLogoSetting(settings: SectionInstance['settings']): { key: string; url: string } {
   for (const key of LOGO_KEYS) {
     const value: SettingValue | undefined = settings[key]
-    if (typeof value === 'string' && value) return value
+    if (typeof value === 'string' && value) return { key, url: value }
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       const reference = value as { url?: unknown; thumb_url?: unknown }
-      if (typeof reference.url === 'string' && reference.url) return reference.url
-      if (typeof reference.thumb_url === 'string' && reference.thumb_url) return reference.thumb_url
+      if (typeof reference.url === 'string' && reference.url) return { key, url: reference.url }
+      if (typeof reference.thumb_url === 'string' && reference.thumb_url) return { key, url: reference.thumb_url }
     }
   }
-  return ''
+  return { key: 'logo', url: '' }
 }
 
 export function HeaderSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   const label = settingText(section.settings, 'label', locale, locale === 'ar' ? 'متجري' : 'My store')
-  const logo = resolveMediaUrl(readLogoUrl(section.settings))
+  const logoSetting = readLogoSetting(section.settings)
+  const logo = resolveMediaUrl(logoSetting.url)
   const sticky = section.settings.sticky !== false
   const links = (section.blocks ?? []).filter((block) => (block.type ?? 'link') === 'link')
   const ar = locale === 'ar'
@@ -39,13 +40,13 @@ export function HeaderSection({ section, locale }: { section: SectionInstance; l
     <span className="flex items-center gap-2 text-lg font-bold">
       {logo ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt={label} className="size-9 rounded-xl object-contain" />
+        <img {...editKey(logoSetting.key)} src={logo} alt={label} className="size-9 rounded-xl object-contain" />
       ) : (
         <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
           <ShoppingBag className="size-4" />
         </span>
       )}
-      {label}
+      <span {...editKey('label')}>{label}</span>
     </span>
   )
 
@@ -54,6 +55,7 @@ export function HeaderSection({ section, locale }: { section: SectionInstance; l
   const navLinks = links.map((link) => (
     <a
       key={link.id}
+      {...editKey('label', link.id)}
       href={settingString(link.settings, 'url', '/')}
       className="hover:text-foreground"
     >

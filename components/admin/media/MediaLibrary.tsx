@@ -45,6 +45,7 @@ import {
   type MediaItem,
 } from '@/hooks/queries/useMedia'
 import { listMedia } from '@/lib/admin/media-client'
+import { MediaThumbnail } from '@/components/shared/media/MediaThumbnail'
 
 interface MediaLibraryProps {
   onSelectItem?: (item: MediaItem) => void
@@ -345,12 +346,12 @@ export function MediaLibrary({
                   {/* Thumbnail Container */}
                   <div className="relative aspect-square w-full bg-muted/40 overflow-hidden flex items-center justify-center">
                     {item.thumb_url || item.is_image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <MediaThumbnail
                         src={item.thumb_url || item.url}
+                        fallbackSrc={item.url}
                         alt={item.alt_text ?? item.name}
-                        loading="lazy"
-                        className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        sizeClassName="size-full"
+                        className="transition-transform duration-200 group-hover:scale-105"
                       />
                     ) : (
                       <div className="text-muted-foreground group-hover:text-foreground transition-colors">

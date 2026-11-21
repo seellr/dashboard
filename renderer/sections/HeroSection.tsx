@@ -1,6 +1,6 @@
 import type { Locale, SectionInstance, SettingValue } from '@/shared/types/builder'
 import { resolveMediaUrl } from '@/shared/lib/media-url'
-import { settingString, settingText } from '../section-utils'
+import { editKey, settingString, settingText } from '../section-utils'
 
 /**
  * The live theme schema exposes the hero image under different keys depending
@@ -16,21 +16,22 @@ function isImageLikeUrl(value: string): boolean {
   return IMAGE_URL_PATTERN.test(value) || value.includes('/storage/')
 }
 
-function readImageUrl(settings: SectionInstance['settings']): string {
+/** Returns the URL together with the setting key it came from, for inline editing. */
+function readImageSetting(settings: SectionInstance['settings']): { key: string; url: string } {
   for (const key of HERO_IMAGE_KEYS) {
     const value: SettingValue | undefined = settings[key]
-    if (typeof value === 'string' && value) return value
+    if (typeof value === 'string' && value) return { key, url: value }
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       const reference = value as { url?: unknown; thumb_url?: unknown }
-      if (typeof reference.url === 'string' && reference.url) return reference.url
-      if (typeof reference.thumb_url === 'string' && reference.thumb_url) return reference.thumb_url
+      if (typeof reference.url === 'string' && reference.url) return { key, url: reference.url }
+      if (typeof reference.thumb_url === 'string' && reference.thumb_url) return { key, url: reference.thumb_url }
     }
   }
   // Fallback for themes that name the image setting differently.
-  for (const value of Object.values(settings)) {
-    if (typeof value === 'string' && isImageLikeUrl(value)) return value
+  for (const [key, value] of Object.entries(settings)) {
+    if (typeof value === 'string' && isImageLikeUrl(value)) return { key, url: value }
   }
-  return ''
+  return { key: 'image', url: '' }
 }
 
 /** Padding presets for the schema's `height` select (sm | md | lg). */
@@ -45,16 +46,25 @@ export function HeroSection({ section, locale }: { section: SectionInstance; loc
   // `title` / `subtitle`. Read the schema keys first, and only fall back to the
   // legacy keys when they are actually missing (an explicitly cleared heading
   // must stay empty rather than reverting to the default copy).
+  const titleKey = 'heading' in section.settings ? 'heading' : 'title'
+  const subtitleKey = 'subheading' in section.settings ? 'subheading' : 'subtitle'
   const title =
-    'heading' in section.settings
+    titleKey === 'heading'
       ? settingText(section.settings, 'heading', locale)
       : settingText(section.settings, 'title', locale, locale === 'ar' ? 'مرحبًا بك' : 'Welcome')
   const subtitle =
-    'subheading' in section.settings
+    subtitleKey === 'subheading'
       ? settingText(section.settings, 'subheading', locale)
       : settingText(section.settings, 'subtitle', locale)
+  const eyebrow = settingText(
+    section.settings,
+    'eyebrow',
+    locale,
+    locale === 'ar' ? 'اختيارات مصممة لك' : 'Curated for you',
+  )
   const background = settingString(section.settings, 'background_color', 'var(--theme-primary)')
-  const image = resolveMediaUrl(readImageUrl(section.settings))
+  const imageSetting = readImageSetting(section.settings)
+  const image = resolveMediaUrl(imageSetting.url)
   const padded = heroPadding(settingString(section.settings, 'height', 'md'))
   const buttons = (section.blocks ?? []).filter((block) => (block.type ?? 'button') === 'button')
 
@@ -66,18 +76,20 @@ export function HeroSection({ section, locale }: { section: SectionInstance; loc
       {image ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" className="absolute inset-0 -z-20 size-full object-cover" />
+          <img {...editKey(imageSetting.key)} src={image} alt="" className="absolute inset-0 -z-20 size-full object-cover" />
           <div className="absolute inset-0 -z-10 bg-black/50" aria-hidden="true" />
         </>
       ) : (
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,var(--theme-primary),transparent_58%)] opacity-80" aria-hidden="true" />
       )}
       <div className="mx-auto max-w-4xl">
-        <span className="mb-6 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-medium text-white/80">
-          {locale === 'ar' ? 'اختيارات مصممة لك' : 'Curated for you'}
-        </span>
-        <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl">{title}</h1>
-        {subtitle && <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/65">{subtitle}</p>}
+        {eyebrow && (
+          <span {...editKey('eyebrow')} className="mb-6 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-medium text-white/80">
+            {eyebrow}
+          </span>
+        )}
+        <h1 {...editKey(titleKey)} className="text-4xl font-bold leading-[1.1] tracking-tight md:text-7xl">{title}</h1>
+        {subtitle && <p {...editKey(subtitleKey)} className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/65">{subtitle}</p>}
         {buttons.length > 0 && (
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             {buttons.map((button) => {
@@ -85,6 +97,7 @@ export function HeroSection({ section, locale }: { section: SectionInstance; loc
               return (
                 <a
                   key={button.id}
+                  {...editKey('label', button.id)}
                   href={url}
                   className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white/90"
                 >

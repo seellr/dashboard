@@ -95,17 +95,19 @@ function placeholderProducts(locale: Locale, count: number): ProductCarouselItem
 
 export function ProductCarouselSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   const fallbackTitle = locale === 'ar' ? 'الأكثر طلبًا' : 'Popular right now'
+  const titleKey = 'heading' in section.settings ? 'heading' : 'title'
+  const descriptionKey = 'subheading' in section.settings ? 'subheading' : 'subtitle'
   const title = settingText(
     section.settings,
-    'heading',
+    titleKey,
     locale,
-    settingText(section.settings, 'title', locale, fallbackTitle),
+    settingText(section.settings, titleKey === 'heading' ? 'title' : 'heading', locale, fallbackTitle),
   )
   const description = settingText(
     section.settings,
-    'subheading',
+    descriptionKey,
     locale,
-    settingText(section.settings, 'subtitle', locale),
+    settingText(section.settings, descriptionKey === 'subheading' ? 'subtitle' : 'subheading', locale),
   )
   const eyebrow =
     settingText(section.settings, 'eyebrow', locale) ||
@@ -129,6 +131,7 @@ export function ProductCarouselSection({ section, locale }: { section: SectionIn
         title={title}
         description={description || undefined}
         eyebrow={eyebrow}
+        editableKeys={{ title: titleKey, description: descriptionKey, eyebrow: 'eyebrow' }}
         slidesPerView={Number.isFinite(slidesPerView) ? slidesPerView : 4}
         loop={section.settings.loop !== false}
         autoplay={section.settings.autoplay === true}

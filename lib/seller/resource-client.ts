@@ -344,12 +344,25 @@ export async function activateSellerTheme(theme_ulid: string) {
     body: JSON.stringify({ theme_ulid }),
   })
 }
+/**
+ * Saves theme setting overrides.
+ *
+ * The backend stores settings as a `key -> value` map: it iterates the payload
+ * and rejects any key that the active theme's manifest does not declare. Sending
+ * an array of `{ key, value }` objects makes PHP iterate the numeric indexes, so
+ * every entry fails as `settings.0: Unknown setting.` — always serialise to a
+ * map, whatever shape the caller passes in.
+ */
 export async function updateSellerThemeSettings(
   settings: Record<string, unknown> | SellerThemeSettingInput[],
 ) {
-  const payload = Array.isArray(settings)
-    ? settings
-    : Object.entries(settings).map(([key, value]) => ({ key, value }))
+  const payload: Record<string, unknown> = Array.isArray(settings)
+    ? Object.fromEntries(
+        settings
+          .filter((item) => Boolean(item && typeof item.key === 'string' && item.key))
+          .map((item) => [item.key, item.value]),
+      )
+    : settings
 
   return sellerFetchClient<SellerActiveTheme>('/theme/settings', {
     method: 'PUT',

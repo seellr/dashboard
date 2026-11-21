@@ -50,6 +50,14 @@ export function SettingsPanel({ onBack }: SettingsPanelProps = {}) {
   })
 
   const sectionId = section?.id ?? null
+  const focusedField = useEditorStore((state) => state.focusedField)
+  const focusTarget = useMemo(() => {
+    if (!focusedField || focusedField.sectionId !== sectionId || focusedField.blockId) return null
+    const target = definitionList.find((item) => item.key === focusedField.key)
+    if (!target) return null
+    return { name: settingFieldName(target, localeTab), token: focusedField.token }
+  }, [focusedField, sectionId, definitionList, localeTab])
+
   useEffect(() => {
     if (!section) return
     form.reset(flattenSettings(section.settings, definitionList, localeTab))
@@ -148,6 +156,7 @@ export function SettingsPanel({ onBack }: SettingsPanelProps = {}) {
           fonts={schema.fonts ?? []}
           products={products}
           onCommit={commitField}
+          focusTarget={focusTarget}
         />
       )}
 

@@ -8,11 +8,15 @@ export type EditorToPreviewMessage =
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'UPDATE_PAGE'; page: BuilderPage }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'UPDATE_SETTINGS'; themeSettings: ThemeRuntimeSettings }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SELECT_SECTION'; sectionId: string | null }
+  /** Highlight the field that currently has focus in the settings panel. */
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SET_EDITING'; sectionId: string | null; blockId?: string | null; key?: string | null }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SET_LOCALE'; locale: Locale }
 
 export type PreviewToEditorMessage =
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'READY' }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SECTION_CLICKED'; sectionId: string }
+  /** Fired when a `[data-setting]` element in the preview is clicked. */
+  | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'FIELD_CLICKED'; sectionId: string; blockId?: string | null; key: string }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'SECTION_HOVERED'; sectionId: string | null }
   | { source: typeof PREVIEW_SOURCE; v: typeof PREVIEW_PROTOCOL_VERSION; type: 'ERROR'; message: string }
 

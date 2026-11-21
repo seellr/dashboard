@@ -1,3 +1,22 @@
 import type { Locale, SectionInstance } from '@/shared/types/builder'
-import { settingText } from '../section-utils'
-export function CategoryGridSection({ section, locale }: { section: SectionInstance; locale: Locale }) { const count = Math.max(2, Math.min(Number(section.settings.count ?? 4), 8)); return <section className="mx-auto max-w-7xl px-6 py-16"><h2 className="mb-8 text-2xl font-bold">{settingText(section.settings, 'title', locale, locale === 'ar' ? 'تسوق حسب التصنيف' : 'Shop by category')}</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: count }, (_, index) => <div key={index} className="group rounded-2xl border bg-gradient-to-br from-primary/10 to-muted p-6 transition-transform hover:-translate-y-1"><div className="mb-10 text-3xl font-bold text-primary/30">0{index + 1}</div><h3 className="font-semibold">{locale === 'ar' ? `تصنيف ${index + 1}` : `Category ${index + 1}`}</h3></div>)}</div></section> }
+import { editKey, settingText } from '../section-utils'
+
+export function CategoryGridSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
+  const count = Math.max(2, Math.min(Number(section.settings.count ?? 4), 8))
+  const title = settingText(section.settings, 'title', locale, locale === 'ar' ? 'تسوق حسب التصنيف' : 'Shop by category')
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-16">
+      <h2 {...editKey('title')} className="mb-8 text-2xl font-bold">{title}</h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: count }, (_, index) => (
+          <div key={index} className="group rounded-2xl border bg-gradient-to-br from-primary/10 to-muted p-6 transition-transform hover:-translate-y-1">
+            <div className="mb-10 text-3xl font-bold text-primary/30">0{index + 1}</div>
+            <h3 {...editKey(`category_${index + 1}`)} className="font-semibold">
+              {settingText(section.settings, `category_${index + 1}`, locale, locale === 'ar' ? `تصنيف ${index + 1}` : `Category ${index + 1}`)}
+            </h3>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
