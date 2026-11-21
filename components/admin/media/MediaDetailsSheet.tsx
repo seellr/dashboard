@@ -45,6 +45,7 @@ import {
   type UpdateMediaInput,
 } from '@/types/dto/media.dto'
 import { useDeleteMedia, useUpdateMedia } from '@/hooks/queries/useMedia'
+import { MediaThumbnail } from '@/components/shared/media/MediaThumbnail'
 
 interface MediaDetailsSheetProps {
   media: MediaResource | null
@@ -160,11 +161,13 @@ export function MediaDetailsSheet({
           {/* Preview Box */}
           <div className="w-full mt-4 rounded-xl border bg-muted/40 overflow-hidden flex items-center justify-center min-h-48 relative">
             {media.is_image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <MediaThumbnail
                 src={media.url}
+                fallbackSrc={media.thumb_url}
                 alt={media.alt_text ?? media.name}
-                className="max-h-64 w-full object-contain"
+                sizeClassName="max-h-64 w-full"
+                fit="contain"
+                loading="eager"
               />
             ) : media.mime_type.startsWith('video/') ? (
               <video src={media.url} controls className="max-h-64 w-full" />

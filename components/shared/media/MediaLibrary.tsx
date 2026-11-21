@@ -358,6 +358,7 @@ export function MediaLibrary({
                   {item.thumb_url || item.url ? (
                     <MediaThumbnail
                       src={getMediaUrl(item.thumb_url || item.url)}
+                      fallbackSrc={getMediaUrl(item.url)}
                       alt={item.alt_text ?? item.name ?? item.original_name ?? ''}
                     />
                   ) : (

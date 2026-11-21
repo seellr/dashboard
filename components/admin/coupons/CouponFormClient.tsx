@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CreateCouponSchema, type CreateCouponInput, CouponTypeValues, CouponTypeLabels } from '@/types/dto/coupon.dto'
 import { useCreateCoupon, useUpdateCoupon, useCouponQuery } from '@/hooks/queries/useCoupons'
+import { formatDateTimeWithOffset, toDateTimeLocalValue } from '@/lib/utils'
 
 export function CouponFormClient({ locale, ulid, newLabel, onSuccess }: { locale: string; ulid: string; newLabel?: string; onSuccess?: () => void }) {
   const t = useTranslations('admin.coupons')
@@ -43,7 +44,7 @@ export function CouponFormClient({ locale, ulid, newLabel, onSuccess }: { locale
         type: existing.type.id,
         value: Number(existing.value),
         max_uses: existing.max_uses,
-        expires_at: existing.expires_at,
+        expires_at: toDateTimeLocalValue(existing.expires_at),
         active: existing.active,
       })
     }
@@ -52,7 +53,11 @@ export function CouponFormClient({ locale, ulid, newLabel, onSuccess }: { locale
 
   async function onSubmit(values: CreateCouponInput) {
     const mutation = isNew ? createCoupon : updateCoupon
-    const result = await mutation.mutateAsync(values)
+    const payload: CreateCouponInput = {
+      ...values,
+      expires_at: values.expires_at ? formatDateTimeWithOffset(values.expires_at) : null,
+    }
+    const result = await mutation.mutateAsync(payload)
     if (!result.ok) {
       sileo.error({ title: t('form.saveError'), description: result.message })
       return

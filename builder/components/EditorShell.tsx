@@ -26,6 +26,7 @@ import {
   useBuilderDraft,
   useBuilderPages,
   useBuilderSchema,
+  useBuilderThemeSettings,
 } from '@/builder/hooks/useBuilderData'
 import { BuilderApiError, subscriberThemeApi } from '@/api/client'
 import { builderPageSchema } from '@/shared/schemas/builder'
@@ -57,6 +58,9 @@ export function EditorShell() {
   const schema = useEditorStore((state) => state.schema)
   const locale = useEditorStore((state) => state.locale)
   const selectedSectionId = useEditorStore((state) => state.selectedSectionId)
+  const focusedField = useEditorStore((state) => state.focusedField)
+  const focusField = useEditorStore((state) => state.focusField)
+  const setLocaleTab = useEditorStore((state) => state.setLocaleTab)
   const dirty = useEditorStore((state) => state.dirty)
   const pageFromServer = useEditorStore((state) => state.pageFromServer)
   const setLocale = useEditorStore((state) => state.setLocale)
@@ -66,12 +70,15 @@ export function EditorShell() {
   const setSchema = useEditorStore((state) => state.setSchema)
   const schemaQuery = useBuilderSchema(locale)
   const pagesQuery = useBuilderPages(locale)
+  const { data: themeSettings = {} } = useBuilderThemeSettings()
 
   const [activeTab, setActiveTab] = useState<'sections' | 'settings'>('sections')
 
-  // Automatically switch left panel tab to 'settings' when a section is selected
+  // Automatically switch the left panel to its settings tab when a section is
+  // selected from the list or the preview.
   useEffect(() => {
     if (selectedSectionId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the tab is local UI state; selecting a section must reveal its settings
       setActiveTab('settings')
     }
   }, [selectedSectionId])
@@ -154,12 +161,24 @@ export function EditorShell() {
 
   const handlePreviewMessage = useCallback(
     (message: PreviewToEditorMessage) => {
+      if (message.type === 'FIELD_CLICKED') {
+        // The preview shows one locale; make sure the settings panel edits the
+        // same language before focusing the input.
+        setLocaleTab(locale)
+        focusField({
+          sectionId: message.sectionId,
+          blockId: message.blockId ?? null,
+          key: message.key,
+        })
+        setActiveTab('settings')
+        return
+      }
       if (message.type === 'SECTION_CLICKED') {
         selectSection(message.sectionId)
         setActiveTab('settings')
       }
     },
-    [selectSection],
+    [selectSection, focusField, setLocaleTab, locale],
   )
 
   const queryError = schemaQuery.error || pagesQuery.error || draftQuery.error
@@ -385,7 +404,9 @@ export function EditorShell() {
             page={page}
             schema={schema}
             locale={locale}
+            themeSettings={themeSettings}
             selectedSectionId={selectedSectionId}
+            focusedField={focusedField}
             previewToken={previewToken}
             onMessage={handlePreviewMessage}
           />

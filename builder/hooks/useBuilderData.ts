@@ -2,9 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { BuilderApiError, subscriberThemeApi } from '@/api/client'
+import { getSellerThemeSettings } from '@/lib/seller/resource-client'
+import { toThemeRuntimeSettings } from '@/shared/lib/theme-settings'
 import { withStorefrontSectionFallbacks } from '@/builder/lib/section-fallbacks'
 import { builderPageListSchema, builderPageSchema, themeSchemaResponseSchema } from '@/shared/schemas/builder'
-import type { BuilderPage, Locale, ThemeSchema } from '@/shared/types/builder'
+import type { BuilderPage, Locale, ThemeRuntimeSettings, ThemeSchema } from '@/shared/types/builder'
 
 /**
  * Server payloads for the builder are documented only as endpoint names, so a
@@ -73,6 +75,22 @@ export function useBuilderSchema(locale: Locale) {
         }
         throw error
       }
+    },
+  })
+}
+
+/**
+ * Theme colour/font overrides saved by the seller. The storefront theme
+ * settings screen and the builder preview must show the same palette, so the
+ * preview receives these as CSS variables.
+ */
+export function useBuilderThemeSettings() {
+  return useQuery({
+    queryKey: ['builder-theme-settings'],
+    staleTime: 60_000,
+    queryFn: async (): Promise<ThemeRuntimeSettings> => {
+      const result = await getSellerThemeSettings()
+      return result.ok ? toThemeRuntimeSettings(result.data) : {}
     },
   })
 }

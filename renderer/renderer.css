@@ -3,6 +3,30 @@
 [data-section-id]:hover::after, [data-section-id][data-selected='true']::after { border-color: var(--theme-primary, #2563eb); }
 
 /* ============================================================
+   Builder preview: clickable text fields
+   `data-setting` is emitted by the section renderers, so hovering
+   any editable value shows what a click will focus in the panel.
+   These rules are scoped to the preview iframe wrapper and never
+   reach the published storefront.
+   ============================================================ */
+[data-builder-preview] [data-setting] {
+  cursor: pointer;
+  border-radius: 3px;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+  transition: outline-color 120ms ease, background-color 120ms ease;
+}
+[data-builder-preview] [data-setting]:hover {
+  outline-color: color-mix(in srgb, var(--theme-primary, #2563eb) 65%, transparent);
+  background-color: color-mix(in srgb, var(--theme-primary, #2563eb) 6%, transparent);
+}
+[data-builder-preview] [data-setting][data-editing] {
+  outline: 2px solid var(--theme-primary, #2563eb);
+  outline-offset: 3px;
+  background-color: color-mix(in srgb, var(--theme-primary, #2563eb) 10%, transparent);
+}
+
+/* ============================================================
    Rich text editor (theme builder settings panel)
    ============================================================ */
 .rte-content {

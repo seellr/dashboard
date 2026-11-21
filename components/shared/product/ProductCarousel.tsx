@@ -25,6 +25,12 @@ export interface ProductCarouselProps {
   description?: string
   eyebrow?: string
   action?: React.ReactNode
+  /**
+   * Setting keys for the heading block. When present, each header element is
+   * marked with `data-setting` so a click in the builder preview focuses the
+   * matching input. Left undefined on the published storefront.
+   */
+  editableKeys?: { title?: string; description?: string; eyebrow?: string }
   variant?: 'storefront' | 'dashboard'
   slidesPerView?: number
   loop?: boolean
@@ -163,6 +169,7 @@ export function ProductCarousel({
   description,
   eyebrow,
   action,
+  editableKeys,
   variant = 'storefront',
   slidesPerView = 4,
   loop = true,
@@ -178,11 +185,15 @@ export function ProductCarousel({
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {eyebrow && (
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+            <span
+              {...(editableKeys?.eyebrow ? { 'data-setting': editableKeys.eyebrow } : {})}
+              className="text-xs font-bold uppercase tracking-[0.2em] text-primary"
+            >
               {eyebrow}
             </span>
           )}
           <h2
+            {...(editableKeys?.title ? { 'data-setting': editableKeys.title } : {})}
             className={cn(
               'font-bold tracking-tight',
               eyebrow ? 'mt-3 text-3xl' : 'text-2xl',
@@ -191,7 +202,10 @@ export function ProductCarousel({
             {title}
           </h2>
           {description && (
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            <p
+              {...(editableKeys?.description ? { 'data-setting': editableKeys.description } : {})}
+              className="mt-2 max-w-2xl text-sm text-muted-foreground"
+            >
               {description}
             </p>
           )}

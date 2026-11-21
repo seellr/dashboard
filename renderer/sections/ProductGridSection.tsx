@@ -1,5 +1,5 @@
 import type { Locale, SectionInstance } from '@/shared/types/builder'
-import { settingText } from '../section-utils'
+import { editKey, settingText } from '../section-utils'
 
 const GRID_BY_COLUMNS: Record<string, string> = {
   '2': 'sm:grid-cols-2',
@@ -9,10 +9,13 @@ const GRID_BY_COLUMNS: Record<string, string> = {
 
 export function ProductGridSection({ section, locale }: { section: SectionInstance; locale: Locale }) {
   // Live schema: `heading`, `products` (ULID list), `columns` (2–4).
+  const headingKey = 'heading' in section.settings ? 'heading' : 'title'
   const title =
-    'heading' in section.settings
+    headingKey === 'heading'
       ? settingText(section.settings, 'heading', locale)
       : settingText(section.settings, 'title', locale, locale === 'ar' ? 'منتجاتنا' : 'Featured products')
+  const eyebrow = settingText(section.settings, 'eyebrow', locale, locale === 'ar' ? 'منتجات مختارة' : 'Selected collection')
+  const badge = settingText(section.settings, 'badge', locale, locale === 'ar' ? 'مميز' : 'Featured')
   const columns = String(section.settings.columns ?? 3)
   const columnClass = GRID_BY_COLUMNS[columns] ?? GRID_BY_COLUMNS['3']
   const products = Array.isArray(section.settings.products) ? section.settings.products : []
@@ -23,10 +26,10 @@ export function ProductGridSection({ section, locale }: { section: SectionInstan
     <section className="mx-auto max-w-7xl px-6 py-20">
       <div className="mb-10 flex items-end justify-between">
         <div>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-            {locale === 'ar' ? 'منتجات مختارة' : 'Selected collection'}
+          <span {...editKey('eyebrow')} className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+            {eyebrow}
           </span>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight">{title}</h2>
+          <h2 {...editKey(headingKey)} className="mt-3 text-3xl font-bold tracking-tight">{title}</h2>
         </div>
       </div>
       <div className={`grid gap-5 ${columnClass}`}>
@@ -36,8 +39,8 @@ export function ProductGridSection({ section, locale }: { section: SectionInstan
               <div className="absolute inset-0 grid place-items-center text-5xl font-bold text-primary/20">
                 {String(index + 1).padStart(2, '0')}
               </div>
-              <span className="absolute start-4 top-4 rounded-full bg-background/85 px-3 py-1 text-xs font-semibold">
-                {locale === 'ar' ? 'مميز' : 'Featured'}
+              <span {...editKey('badge')} className="absolute start-4 top-4 rounded-full bg-background/85 px-3 py-1 text-xs font-semibold">
+                {badge}
               </span>
             </div>
             <div className="p-5">
