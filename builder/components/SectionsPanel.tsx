@@ -31,6 +31,7 @@ import {
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SectionIcon } from '@/builder/lib/section-icons'
 import { useEditorStore } from '@/builder/store/editor-store'
 import type { SectionInstance } from '@/shared/types/builder'
 import { storefrontSectionCatalog } from '@/renderer/section-catalog'
@@ -58,40 +59,51 @@ function SortableSection({
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : section.hidden ? 0.6 : 1,
+        opacity: isDragging ? 0.4 : section.hidden ? 0.6 : 1,
       }}
-      className={`group relative flex items-center gap-1.5 rounded-lg border p-2 transition-colors ${
+      className={`group relative flex items-center gap-1.5 rounded-xl border p-2 transition-all ${
         selected
-          ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20'
-          : 'bg-card hover:border-muted-foreground/30 hover:bg-muted/30'
+          ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+          : 'bg-card shadow-xs hover:border-primary/30 hover:bg-muted/30 hover:shadow-sm'
       }`}
     >
       <button
         type="button"
         aria-label={`Move ${name}`}
-        className="cursor-grab p-1 text-muted-foreground/60 transition-colors hover:text-foreground active:cursor-grabbing"
+        className="shrink-0 cursor-grab p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="size-4" />
       </button>
 
+      <div
+        className={`grid size-8 shrink-0 place-items-center rounded-lg border transition-colors ${
+          selected ? 'border-primary/30 bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground'
+        }`}
+      >
+        <SectionIcon type={section.type} className="size-4" />
+      </div>
+
       <button
         type="button"
         onClick={onSelect}
-        className="min-w-0 flex-1 truncate text-start text-sm font-medium"
+        className="min-w-0 flex-1 text-start"
       >
-        <span className={section.hidden ? 'line-through text-muted-foreground' : ''}>
+        <span
+          className={`block truncate text-sm font-medium ${
+            section.hidden ? 'text-muted-foreground line-through' : ''
+          }`}
+        >
           {name}
         </span>
-        {section.hidden && (
-          <span className="ms-1.5 text-[10px] text-muted-foreground font-normal">
-            (Hidden)
-          </span>
-        )}
+        <span className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground/70">
+          {section.hidden ? 'Hidden · ' : ''}
+          {section.type}
+        </span>
       </button>
 
-      <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100">
+      <div className="flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
         <Button
           type="button"
           variant="ghost"
@@ -254,16 +266,21 @@ export function SectionsPanel() {
                       setAdding(false)
                       setSearch('')
                     }}
-                    className="flex flex-col items-start gap-0.5 rounded-lg p-2 text-start transition-colors hover:bg-muted/60"
+                    className="group flex items-center gap-2.5 rounded-lg border border-transparent p-2 text-start transition-all hover:border-primary/30 hover:bg-background hover:shadow-xs"
                   >
-                    <span className="text-xs font-medium text-foreground">
-                      {definition.name}
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted/60 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                      <SectionIcon type={definition.handle} className="size-4" />
                     </span>
-                    {desc && (
-                      <span className="text-[11px] text-muted-foreground line-clamp-1">
-                        {desc}
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-medium text-foreground">
+                        {definition.name}
                       </span>
-                    )}
+                      {desc && (
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground line-clamp-1">
+                          {desc}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 )
               })

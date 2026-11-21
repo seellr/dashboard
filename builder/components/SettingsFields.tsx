@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import { HexColorPicker } from 'react-colorful'
-import { ImageIcon, RefreshCw } from 'lucide-react'
+import { ImageIcon, Plus, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,11 +14,24 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { SettingDefinition } from '@/shared/types/builder'
 import { settingFieldName } from '@/builder/lib/settings-form'
+import { ColumnCountField } from '@/builder/components/ColumnCountField'
+import { ProductPickerDialog, ProductThumbnail } from '@/builder/components/ProductPickerDialog'
 import { RichTextEditor } from '@/builder/components/RichTextEditor'
 import { resolveMediaUrl } from '@/shared/lib/media-url'
 import type { SellerProduct } from '@/lib/seller/resource-client'
 
 export type SettingsFormValues = Record<string, unknown>
+
+function selectedProductUlids(value: unknown, multiple: boolean): string[] {
+  if (multiple) return Array.isArray(value) ? value.map(String) : []
+  return typeof value === 'string' && value ? [value] : []
+}
+
+const COLUMN_SETTING_KEYS = new Set(['columns', 'slides_per_view'])
+
+function isColumnSetting(definition: SettingDefinition): boolean {
+  return COLUMN_SETTING_KEYS.has(definition.key) && ['number', 'range', 'select', 'text'].includes(definition.type)
+}
 
 export interface SettingsFieldsProps {
   definitions: SettingDefinition[]
@@ -43,6 +56,7 @@ export interface SettingsFieldsProps {
  */
 export function SettingsFields({ definitions, form, locale, fonts, products, onCommit, focusTarget }: SettingsFieldsProps) {
   const [mediaField, setMediaField] = useState<string | null>(null)
+  const [productField, setProductField] = useState<{ name: string; multiple: boolean } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const [highlighted, setHighlighted] = useState<string | null>(null)
 
@@ -72,9 +86,9 @@ export function SettingsFields({ definitions, form, locale, fonts, products, onC
           <div
             key={definition.key}
             data-setting-field={settingFieldName(definition, locale)}
-            className={`rounded-lg transition-shadow ${
+            className={`rounded-xl border border-border/70 bg-card p-3 shadow-xs transition-all hover:border-primary/30 hover:shadow-sm ${
               highlighted === settingFieldName(definition, locale)
-                ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background'
                 : ''
             }`}
           >
@@ -85,6 +99,7 @@ export function SettingsFields({ definitions, form, locale, fonts, products, onC
               fonts={fonts}
               products={products}
               onChooseImage={() => setMediaField(settingFieldName(definition, locale))}
+              onChooseProduct={(name, multiple) => setProductField({ name, multiple })}
               onCommit={onCommit}
             />
           </div>
@@ -105,6 +120,24 @@ export function SettingsFields({ definitions, form, locale, fonts, products, onC
           setMediaField(null)
         }}
       />
+      {productField ? (
+        <ProductPickerDialog
+          key={productField.name}
+          open
+          onOpenChange={(open) => {
+            if (!open) setProductField(null)
+          }}
+          products={products}
+          multiple={productField.multiple}
+          selected={selectedProductUlids(form.getValues(productField.name), productField.multiple)}
+          onSelect={(ulids) => {
+            const value = productField.multiple ? ulids : (ulids[0] ?? '')
+            form.setValue(productField.name, value, { shouldDirty: true })
+            onCommit(productField.name, value)
+            setProductField(null)
+          }}
+        />
+      ) : null}
     </>
   )
 }
@@ -116,10 +149,11 @@ type SettingFieldProps = {
   fonts: string[]
   products: SellerProduct[]
   onChooseImage: () => void
+  onChooseProduct: (fieldName: string, multiple: boolean) => void
   onCommit: (fieldName: string, value: unknown) => void
 }
 
-function SettingField({ definition, locale, form, fonts, products, onChooseImage, onCommit }: SettingFieldProps) {
+function SettingField({ definition, locale, form, fonts, products, onChooseImage, onChooseProduct, onCommit }: SettingFieldProps) {
   const name = settingFieldName(definition, locale)
   const label = definition.label || definition.key
   const help = definition.help ? <p className="text-xs text-muted-foreground">{definition.help}</p> : null
@@ -179,6 +213,19 @@ function SettingField({ definition, locale, form, fonts, products, onChooseImage
         />
         {help}
       </div>
+    )
+  }
+
+  if (isColumnSetting(definition)) {
+    return (
+      <ColumnCountField
+        definition={definition}
+        form={form}
+        name={name}
+        label={label}
+        help={help}
+        onCommit={onCommit}
+      />
     )
   }
 
@@ -310,36 +357,45 @@ function SettingField({ definition, locale, form, fonts, products, onChooseImage
   if (definition.type === 'product') {
     return (
       <div className="grid gap-2">
-        <Label htmlFor={name}>{label}</Label>
+        <Label>{label}</Label>
         <Controller
           control={form.control}
           name={name}
-          render={({ field }) => (
-            <Select
-              value={typeof field.value === 'string' ? field.value : ''}
-              onValueChange={(value) => {
-                field.onChange(value)
-                onCommit(name, value)
-              }}
-            >
-              <SelectTrigger id={name} className="w-full">
-                <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {products.length === 0 ? (
-                  <SelectItem value="__none__" disabled>
-                    No products found
-                  </SelectItem>
-                ) : (
-                  products.map((product) => (
-                    <SelectItem key={product.ulid} value={product.ulid}>
-                      {product.name || product.internal_name || product.ulid}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          )}
+          render={({ field }) => {
+            const value = typeof field.value === 'string' ? field.value : ''
+            const selected = products.find((product) => product.ulid === value)
+            return (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 justify-start gap-2"
+                  onClick={() => onChooseProduct(name, false)}
+                >
+                  {selected ? (
+                    <>
+                      <ProductThumbnail product={selected} className="size-5 shrink-0 rounded object-cover" />
+                      <span className="truncate">{selected.name || selected.internal_name || selected.ulid}</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">Select {label.toLowerCase()}</span>
+                  )}
+                </Button>
+                {value ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      field.onChange('')
+                      onCommit(name, '')
+                    }}
+                  >
+                    Clear
+                  </Button>
+                ) : null}
+              </div>
+            )
+          }}
         />
         {help}
       </div>
@@ -355,29 +411,60 @@ function SettingField({ definition, locale, form, fonts, products, onChooseImage
           name={name}
           render={({ field }) => {
             const selected = Array.isArray(field.value) ? (field.value as string[]) : []
+            const selectedProducts = selected
+              .map((ulid) => products.find((product) => product.ulid === ulid))
+              .filter((product): product is SellerProduct => Boolean(product))
+
+            const commit = (next: string[]) => {
+              field.onChange(next)
+              onCommit(name, next)
+            }
+
             return (
-              <div className="max-h-44 overflow-y-auto rounded-lg border p-2">
-                {products.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No products found</p>
+              <div className="grid gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="justify-start gap-1.5"
+                  onClick={() => onChooseProduct(name, true)}
+                >
+                  <Plus className="size-4" aria-hidden="true" />
+                  Add products
+                </Button>
+                {selectedProducts.length > 0 ? (
+                  <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border p-2">
+                    {selectedProducts.map((product) => (
+                      <div key={product.ulid} className="flex items-center gap-2 rounded-md px-1 py-1 text-sm">
+                        <ProductThumbnail product={product} className="size-8 shrink-0 rounded object-cover" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {product.name || product.internal_name || product.ulid}
+                        </span>
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Remove ${product.name || product.internal_name || product.ulid}`}
+                          onClick={() => commit(selected.filter((id) => id !== product.ulid))}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  products.map((product) => (
-                    <label key={product.ulid} className="flex items-center gap-2 py-1 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(product.ulid)}
-                        onChange={(event) => {
-                          const next = event.target.checked
-                            ? [...selected, product.ulid]
-                            : selected.filter((id) => id !== product.ulid)
-                          field.onChange(next)
-                          onCommit(name, next)
-                        }}
-                        className="size-4 accent-primary"
-                      />
-                      <span className="truncate">{product.name || product.internal_name || product.ulid}</span>
-                    </label>
-                  ))
+                  <p className="text-xs text-muted-foreground">No products selected yet.</p>
                 )}
+                {selected.length > 0 ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="justify-self-start"
+                    onClick={() => commit([])}
+                  >
+                    Clear all
+                  </Button>
+                ) : null}
               </div>
             )
           }}
