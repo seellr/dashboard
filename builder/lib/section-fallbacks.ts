@@ -109,6 +109,55 @@ function plainSetting(
   }
 }
 
+function columnSetting(key: string, label: string, defaultValue: number): SettingDefinition {
+  return {
+    key,
+    type: 'number',
+    label,
+    help: 'Choose how many items appear side by side on large screens.',
+    default: defaultValue,
+    translatable: false,
+    required: false,
+    min: 1,
+    max: 6,
+    step: 1,
+  }
+}
+
+/**
+ * Column settings used to arrive as plain text, a narrow select (2–4) or not at
+ * all. Normalize them to the same 1–6 numeric control the visual picker and
+ * storefront renderers understand.
+ */
+function ensureColumnSetting(
+  section: SectionDefinition,
+  key: string,
+  label: string,
+  defaultValue: number,
+): SectionDefinition {
+  const desired = columnSetting(key, label, defaultValue)
+  const existing = section.settings.find((setting) => setting.key === key)
+  if (!existing) return { ...section, settings: [...section.settings, desired] }
+  if (existing.type === 'number' && existing.min === 1 && existing.max === 6) return section
+  return {
+    ...section,
+    settings: section.settings.map((setting) =>
+      setting.key === key
+        ? {
+            ...setting,
+            type: 'number',
+            label: setting.label || label,
+            help: setting.help || desired.help,
+            min: 1,
+            max: 6,
+            step: 1,
+            options: undefined,
+          }
+        : setting,
+    ),
+  }
+}
+
 const SECTION_SETTING_FALLBACKS: Record<string, SettingDefinition[]> = {
   hero: [
     localizedSetting('eyebrow', 'Eyebrow', 'اختيارات مصممة لك', 'Curated for you'),
@@ -176,7 +225,10 @@ const SECTION_SETTING_FALLBACKS: Record<string, SettingDefinition[]> = {
   product_grid: [
     localizedSetting('eyebrow', 'Eyebrow', 'منتجات مختارة', 'Selected collection'),
     localizedSetting('badge', 'Product badge', 'مميز', 'Featured'),
+    columnSetting('columns', 'Columns', 3),
   ],
+  product_list: [columnSetting('columns', 'Columns', 3)],
+  product_catalog: [columnSetting('columns', 'Columns', 3)],
   product_detail: [
     localizedSetting('title', 'Product name', 'اسم المنتج', 'Product name'),
     localizedSetting('description', 'Description', 'وصف المنتج', 'Product description', 'textarea'),
@@ -185,6 +237,20 @@ const SECTION_SETTING_FALLBACKS: Record<string, SettingDefinition[]> = {
   ],
   product_carousel: [
     localizedSetting('eyebrow', 'Eyebrow', 'منتجات مختارة', 'Selected collection'),
+    localizedSetting('subheading', 'Subheading', '', ''),
+    columnSetting('slides_per_view', 'Slides per view', 4),
+    {
+      key: 'autoplay_delay',
+      type: 'number',
+      label: 'Autoplay delay (ms)',
+      help: 'Time between slides when autoplay is on.',
+      default: 4500,
+      translatable: false,
+      required: false,
+      min: 1000,
+      max: 15000,
+      step: 500,
+    },
   ],
   featured_product: [
     localizedSetting('title', 'Title', 'منتج مميز', 'Featured product'),
@@ -264,20 +330,7 @@ export const productCarouselFallback: SectionDefinition = {  handle: 'product_ca
       translatable: false,
       required: false,
     },
-    {
-      key: 'slides_per_view',
-      type: 'select',
-      label: 'Slides per view',
-      default: '4',
-      translatable: false,
-      required: false,
-      options: [
-        { value: '1', label: '1' },
-        { value: '2', label: '2' },
-        { value: '3', label: '3' },
-        { value: '4', label: '4' },
-      ],
-    },
+    columnSetting('slides_per_view', 'Slides per view', 4),
     {
       key: 'loop',
       type: 'toggle',
@@ -293,6 +346,17 @@ export const productCarouselFallback: SectionDefinition = {  handle: 'product_ca
       default: false,
       translatable: false,
       required: false,
+    },
+    {
+      key: 'autoplay_delay',
+      type: 'number',
+      label: 'Autoplay delay (ms)',
+      default: 4500,
+      translatable: false,
+      required: false,
+      min: 1000,
+      max: 15000,
+      step: 500,
     },
     {
       key: 'show_arrows',
@@ -327,6 +391,12 @@ export function withStorefrontSectionFallbacks(schema: ThemeSchema): ThemeSchema
   const sections = schema.sections.map((section) => {
     const fallbacks = SECTION_SETTING_FALLBACKS[section.handle] ?? []
     let next = ensureSettings(section, fallbacks)
+    if (['product_grid', 'product_list', 'product_catalog'].includes(next.handle)) {
+      next = ensureColumnSetting(next, 'columns', 'Columns', 3)
+    }
+    if (next.handle === 'product_carousel') {
+      next = ensureColumnSetting(next, 'slides_per_view', 'Slides per view', 4)
+    }
     if (next.handle === 'hero') {
       next = ensureImageSetting(next, HERO_IMAGE_KEYS, heroImageSetting)
     }

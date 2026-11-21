@@ -3,11 +3,12 @@
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, Layers, SlidersHorizontal } from 'lucide-react'
+import { ChevronLeft, Layers } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlocksEditor } from '@/builder/components/BlocksEditor'
+import { SectionIcon } from '@/builder/lib/section-icons'
 import { SettingsFields, type SettingsFormValues } from '@/builder/components/SettingsFields'
 import { commitSetting, flattenSettings, settingFieldName } from '@/builder/lib/settings-form'
 import { useEditorStore } from '@/builder/store/editor-store'
@@ -132,13 +133,20 @@ export function SettingsPanel({ onBack }: SettingsPanelProps = {}) {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <SlidersHorizontal className="size-4 shrink-0 text-primary" />
-            <h2 className="text-sm font-semibold truncate">
-              {definition?.name ?? section.type}
-            </h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+              <SectionIcon type={section.type} className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-semibold">
+                {definition?.name ?? section.type}
+              </h2>
+              <p className="truncate text-[10px] text-muted-foreground">
+                {definitionList.length} setting{definitionList.length === 1 ? '' : 's'}
+              </p>
+            </div>
           </div>
-          <span className="shrink-0 rounded-full border bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground font-mono">
+          <span className="shrink-0 rounded-full border bg-muted/40 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
             {section.type}
           </span>
         </div>
